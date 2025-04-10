@@ -15,7 +15,7 @@
         }
         
         body {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            background: #0a0a12;
             color: white;
             display: flex;
             flex-direction: column;
@@ -24,38 +24,36 @@
         }
         
         .header {
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
+            background: rgba(0, 0, 0, 0.7);
             padding: 15px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: relative;
             z-index: 10;
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
         }
         
         .back-button {
-            background: none;
-            border: none;
-            color: white;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #ffd700;
             font-size: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 15px;
+            border-radius: 20px;
             transition: all 0.3s;
         }
         
         .back-button:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 215, 0, 0.2);
         }
         
         .back-button::before {
             content: "←";
-            margin-right: 5px;
+            margin-right: 8px;
         }
         
         .title {
@@ -64,19 +62,19 @@
             transform: translateX(-50%);
             font-size: 20px;
             font-weight: bold;
-            color: #f8d56b;
-            text-shadow: 0 0 10px rgba(248, 213, 107, 0.5);
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
         }
         
         .balance-container {
-            background: linear-gradient(135deg, #2c3e50, #4ca1af);
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.3);
             padding: 8px 15px;
             border-radius: 20px;
             font-size: 16px;
             display: flex;
             align-items: center;
-            margin-left: auto;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            color: #ffd700;
         }
         
         .balance-icon {
@@ -92,86 +90,122 @@
             justify-content: center;
             padding: 20px;
             position: relative;
-            z-index: 1;
         }
         
         .machine-body {
-            background: linear-gradient(145deg, #c0a080, #a08060);
-            border-radius: 20px;
+            background: #1a1a2a;
+            border-radius: 15px;
             padding: 30px;
             width: 100%;
             max-width: 500px;
             box-shadow: 
-                0 0 30px rgba(0, 0, 0, 0.6),
-                inset 0 -10px 20px rgba(0, 0, 0, 0.3),
-                inset 0 10px 20px rgba(255, 255, 255, 0.2);
-            border: 8px solid #806040;
+                0 0 30px rgba(0, 0, 0, 0.8),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 5px solid #2a2a3a;
             position: relative;
+            overflow: hidden;
         }
         
         .machine-body::before {
             content: '';
             position: absolute;
-            top: -5px;
-            left: -5px;
-            right: -5px;
-            bottom: -5px;
-            border-radius: 25px;
-            background: linear-gradient(145deg, #e0c090, #b09070);
-            z-index: -1;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(to bottom, 
+                rgba(255, 215, 0, 0.1), 
+                transparent);
+            pointer-events: none;
+            z-index: 1;
         }
         
         .machine-screen {
-            background: linear-gradient(135deg, #1a2a3a, #0e1a26);
+            background: #0e0e1a;
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 
-                inset 0 0 20px rgba(0, 0, 0, 0.8),
-                0 5px 15px rgba(0, 0, 0, 0.5);
-            border: 2px solid #304050;
+                inset 0 0 30px rgba(0, 0, 0, 0.8),
+                0 5px 20px rgba(0, 0, 0, 0.6);
+            border: 2px solid #2a2a3a;
             position: relative;
             overflow: hidden;
         }
         
-        .machine-screen::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 30%;
-            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
-            pointer-events: none;
+        .slots-container {
+            position: relative;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         .slots {
             display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
+            justify-content: center;
+            gap: 15px;
             height: 150px;
+            position: relative;
+            z-index: 2;
         }
         
         .slot {
             width: 100px;
-            height: 100%;
-            background: linear-gradient(135deg, #2c3e50, #34495e);
+            height: 150px;
+            background: #151525;
             border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 0, 0, 0.8),
+                0 5px 10px rgba(0, 0, 0, 0.4);
+            border: 2px solid #2a2a4a;
+        }
+        
+        .slot-reel {
+            position: absolute;
+            width: 100%;
+            height: 500%;
+            top: 0;
+            left: 0;
+            transition: top 8s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+        
+        .slot-item {
+            width: 100%;
+            height: 20%;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 60px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 
-                inset 0 0 15px rgba(0, 0, 0, 0.8),
-                0 5px 10px rgba(0, 0, 0, 0.3);
-            border: 2px solid #3d566e;
-            transition: all 0.3s;
+            font-size: 50px;
+            color: white;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
         
-        .slot::before {
-            content: '';
+        .slot-item.seven {
+            background: linear-gradient(135deg, #ff5e62, #ff9966);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 
+                0 0 20px rgba(255, 94, 98, 0.7),
+                inset 0 0 10px rgba(255, 255, 255, 0.3);
+            animation: sevenGlow 2s infinite alternate;
+        }
+        
+        @keyframes sevenGlow {
+            0% { box-shadow: 0 0 20px rgba(255, 94, 98, 0.7); }
+            100% { box-shadow: 0 0 30px rgba(255, 94, 98, 0.9), 0 0 40px rgba(255, 94, 98, 0.5); }
+        }
+        
+        .slot-mask {
             position: absolute;
             top: 0;
             left: 0;
@@ -179,70 +213,27 @@
             bottom: 0;
             background: linear-gradient(
                 to bottom,
-                transparent 0%,
-                rgba(255, 255, 255, 0.05) 50%,
-                transparent 100%
+                rgba(0, 0, 0, 0.8) 0%,
+                transparent 20%,
+                transparent 80%,
+                rgba(0, 0, 0, 0.8) 100%
             );
             pointer-events: none;
+            z-index: 3;
         }
         
-        .slot.active {
-            transform: scale(1.05);
-            box-shadow: 
-                inset 0 0 20px rgba(255, 215, 0, 0.5),
-                0 0 20px rgba(255, 215, 0, 0.3);
-        }
-        
-        .slot.win {
-            animation: slotWin 0.5s ease-in-out 3;
-        }
-        
-        .slot.big-win {
-            animation: slotBigWin 0.5s ease-in-out 5;
-        }
-        
-        @keyframes slotWin {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        @keyframes slotBigWin {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 10px gold; }
-            25% { transform: scale(1.1) rotate(5deg); box-shadow: 0 0 20px gold; }
-            50% { transform: scale(1.1) rotate(-5deg); box-shadow: 0 0 30px gold; }
-            75% { transform: scale(1.1) rotate(5deg); box-shadow: 0 0 20px gold; }
-        }
-        
-        .slot-item {
+        .slot-highlight {
             position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: transform 0.1s;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-        
-        .seven {
-            background: linear-gradient(135deg, #ff5e62, #ff9966);
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            box-shadow: 
-                0 0 15px rgba(255, 94, 98, 0.7),
-                inset 0 0 10px rgba(255, 255, 255, 0.3);
-            animation: sevenGlow 2s infinite alternate;
-        }
-        
-        @keyframes sevenGlow {
-            0% { box-shadow: 0 0 15px rgba(255, 94, 98, 0.7); }
-            100% { box-shadow: 0 0 25px rgba(255, 94, 98, 0.9), 0 0 35px rgba(255, 94, 98, 0.5); }
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 30%;
+            transform: translateY(-50%);
+            background: rgba(255, 215, 0, 0.1);
+            border-top: 1px solid rgba(255, 215, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            pointer-events: none;
+            z-index: 2;
         }
         
         .controls {
@@ -250,6 +241,7 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
+            margin-top: 20px;
         }
         
         .bet-controls {
@@ -263,36 +255,36 @@
         
         .bet-btn {
             padding: 10px 15px;
-            background: linear-gradient(135deg, #3a4a5a, #2c3e50);
-            color: white;
+            background: #252535;
+            color: #ffd700;
             border: none;
-            border-radius: 8px;
+            border-radius: 20px;
             font-size: 16px;
             cursor: pointer;
             transition: all 0.3s;
             min-width: 70px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
         }
         
         .bet-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            background: #353545;
         }
         
         .bet-btn.active {
-            background: linear-gradient(135deg, #4CAF50, #2E8B57);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.4);
+            background: linear-gradient(135deg, #ff9a00, #ff5e00);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 94, 0, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.5);
         }
         
         .spin-btn {
             padding: 15px 40px;
-            background: linear-gradient(135deg, #ff5e62, #ff9966);
+            background: linear-gradient(135deg, #ff9a00, #ff5e00);
             color: white;
             border: none;
-            border-radius: 50px;
-            font-size: 20px;
+            border-radius: 30px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
@@ -300,13 +292,13 @@
             max-width: 250px;
             margin-top: 10px;
             box-shadow: 
-                0 5px 15px rgba(255, 94, 98, 0.4),
-                inset 0 -3px 5px rgba(0, 0, 0, 0.2),
-                inset 0 3px 5px rgba(255, 255, 255, 0.2);
+                0 5px 15px rgba(255, 94, 0, 0.4),
+                inset 0 -3px 5px rgba(0, 0, 0, 0.2);
             text-transform: uppercase;
             letter-spacing: 1px;
             position: relative;
             overflow: hidden;
+            z-index: 1;
         }
         
         .spin-btn::before {
@@ -319,19 +311,19 @@
             background: linear-gradient(
                 to bottom right,
                 rgba(255, 255, 255, 0) 45%,
-                rgba(255, 255, 255, 0.3) 50%,
+                rgba(255, 255, 255, 0.2) 50%,
                 rgba(255, 255, 255, 0) 55%
             );
             transform: rotate(30deg);
             transition: all 0.5s;
+            z-index: -1;
         }
         
         .spin-btn:hover {
             transform: translateY(-3px);
             box-shadow: 
-                0 8px 20px rgba(255, 94, 98, 0.6),
-                inset 0 -3px 5px rgba(0, 0, 0, 0.2),
-                inset 0 3px 5px rgba(255, 255, 255, 0.2);
+                0 8px 20px rgba(255, 94, 0, 0.6),
+                inset 0 -3px 5px rgba(0, 0, 0, 0.2);
         }
         
         .spin-btn:hover::before {
@@ -343,10 +335,11 @@
         }
         
         .spin-btn:disabled {
-            background: linear-gradient(135deg, #555, #444);
+            background: #353545;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: none;
+            color: #777;
         }
         
         .spin-btn:disabled::before {
@@ -359,12 +352,20 @@
             font-weight: bold;
             text-align: center;
             min-height: 30px;
-            color: #f8d56b;
-            text-shadow: 0 0 10px rgba(248, 213, 107, 0.5);
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
             padding: 10px;
             border-radius: 5px;
             background: rgba(0, 0, 0, 0.3);
             width: 100%;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s;
+        }
+        
+        .result-message.show {
+            opacity: 1;
+            transform: translateY(0);
         }
         
         .win-animation {
@@ -372,16 +373,17 @@
         }
         
         @keyframes winPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
         
-        .machine-details {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-            color: #ddd;
-            font-size: 14px;
+        .slot-win {
+            animation: slotWin 0.5s ease-in-out 3;
+        }
+        
+        @keyframes slotWin {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px gold; }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px gold; }
         }
         
         .loading {
@@ -390,11 +392,11 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             justify-content: center;
             align-items: center;
-            color: white;
+            color: #ffd700;
             font-size: 20px;
             z-index: 1000;
             flex-direction: column;
@@ -403,9 +405,9 @@
         .loading-spinner {
             width: 50px;
             height: 50px;
-            border: 5px solid rgba(255, 255, 255, 0.2);
+            border: 5px solid rgba(255, 215, 0, 0.2);
             border-radius: 50%;
-            border-top-color: #ff9966;
+            border-top-color: #ff9a00;
             animation: spin 1s ease-in-out infinite;
             margin-bottom: 15px;
         }
@@ -417,7 +419,16 @@
         @media (max-width: 500px) {
             .slot {
                 width: 80px;
-                font-size: 50px;
+                height: 120px;
+            }
+            
+            .slot-item {
+                font-size: 40px;
+            }
+            
+            .slot-item.seven {
+                width: 60px;
+                height: 60px;
             }
             
             .bet-btn {
@@ -428,7 +439,7 @@
             
             .spin-btn {
                 padding: 12px 30px;
-                font-size: 18px;
+                font-size: 16px;
             }
         }
     </style>
@@ -446,15 +457,23 @@
     <div class="slot-machine">
         <div class="machine-body">
             <div class="machine-screen">
-                <div class="slots">
-                    <div class="slot" id="slot1">
-                        <div class="slot-item">🍒</div>
-                    </div>
-                    <div class="slot" id="slot2">
-                        <div class="slot-item">🍒</div>
-                    </div>
-                    <div class="slot" id="slot3">
-                        <div class="slot-item">🍒</div>
+                <div class="slots-container">
+                    <div class="slots">
+                        <div class="slot" id="slot1">
+                            <div class="slot-reel" id="reel1"></div>
+                            <div class="slot-highlight"></div>
+                            <div class="slot-mask"></div>
+                        </div>
+                        <div class="slot" id="slot2">
+                            <div class="slot-reel" id="reel2"></div>
+                            <div class="slot-highlight"></div>
+                            <div class="slot-mask"></div>
+                        </div>
+                        <div class="slot" id="slot3">
+                            <div class="slot-reel" id="reel3"></div>
+                            <div class="slot-highlight"></div>
+                            <div class="slot-mask"></div>
+                        </div>
                     </div>
                 </div>
                 
@@ -465,18 +484,13 @@
                 <div class="bet-controls">
                     <button class="bet-btn" data-bet="5">5 ₽</button>
                     <button class="bet-btn" data-bet="10">10 ₽</button>
-                    <button class="bet-btn active" data-bet="25">25 ₽</button>
-                    <button class="bet-btn" data-bet="50">50 ₽</button>
+                    <button class="bet-btn" data-bet="25">25 ₽</button>
+                    <button class="bet-btn active" data-bet="50">50 ₽</button>
                     <button class="bet-btn" data-bet="100">100 ₽</button>
                     <button class="bet-btn" data-bet="1000">1000 ₽</button>
                 </div>
                 
                 <button class="spin-btn" id="spinBtn">Крутить</button>
-            </div>
-            
-            <div class="machine-details">
-                <div>VROT-X Casino</div>
-                <div>v1.0.0</div>
             </div>
         </div>
     </div>
@@ -502,7 +516,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // Символы для слотов и их веса (вероятности выпадения)
+        // Символы для слотов
         const symbols = [
             { icon: '🍒', weight: 30 },
             { icon: '🍋', weight: 25 },
@@ -513,17 +527,15 @@
             { icon: '💰', weight: 1, special: true }
         ];
         
-        // Общий вес для расчета вероятностей
-        const totalWeight = symbols.reduce((sum, symbol) => sum + symbol.weight, 0);
-        
         // Глобальные переменные
         let userId = null;
         let userRef = null;
-        let currentBet = 25;
+        let currentBet = 50;
         let balance = 0;
         let isSpinning = false;
         let isFirebaseConnected = false;
-        let spinTimeout = null;
+        let reels = [];
+        let stopOrder = [];
         
         // Элементы DOM
         const balanceElement = document.getElementById('balance');
@@ -531,12 +543,50 @@
         const resultMessage = document.getElementById('resultMessage');
         const backButton = document.getElementById('backButton');
         const betButtons = document.querySelectorAll('.bet-btn');
-        const slots = [
+        const reelElements = [
+            document.getElementById('reel1'),
+            document.getElementById('reel2'),
+            document.getElementById('reel3')
+        ];
+        const slotElements = [
             document.getElementById('slot1'),
             document.getElementById('slot2'),
             document.getElementById('slot3')
         ];
         const loadingElement = document.getElementById('loading');
+        
+        // Инициализация игры
+        function initGame() {
+            // Создаем символы на барабанах
+            reels = [[], [], []];
+            
+            for (let i = 0; i < 3; i++) {
+                reelElements[i].innerHTML = '';
+                
+                // Добавляем 20 символов на каждый барабан (10 сверху, 10 снизу)
+                for (let j = 0; j < 20; j++) {
+                    const symbolIndex = Math.floor(Math.random() * symbols.length);
+                    const symbol = symbols[symbolIndex];
+                    
+                    const item = document.createElement('div');
+                    item.className = 'slot-item';
+                    if (symbol.special && symbol.icon === '7') {
+                        const sevenElement = document.createElement('div');
+                        sevenElement.className = 'slot-item seven';
+                        sevenElement.textContent = '7';
+                        item.appendChild(sevenElement);
+                    } else {
+                        item.textContent = symbol.icon;
+                    }
+                    
+                    reelElements[i].appendChild(item);
+                    reels[i].push(symbol);
+                }
+                
+                // Устанавливаем начальную позицию (чтобы центральный символ был виден)
+                reelElements[i].style.top = '-400%';
+            }
+        }
         
         // Получаем или создаем ID пользователя
         function getOrCreateUserId() {
@@ -614,325 +664,180 @@
             });
         }
         
-        // Выбор случайного символа с учетом весов
-        function getRandomSymbol() {
-            let random = Math.random() * totalWeight;
-            for (const symbol of symbols) {
-                if (random < symbol.weight) {
-                    return symbol;
-                }
-                random -= symbol.weight;
-            }
-            return symbols[0]; // fallback
-        }
-        
-        // Создание элемента символа
-        function createSymbolElement(symbol) {
-            const element = document.createElement('div');
-            element.className = 'slot-item';
-            
-            if (symbol.icon === '7' && symbol.special) {
-                const sevenElement = document.createElement('div');
-                sevenElement.className = 'seven';
-                sevenElement.textContent = '7';
-                element.appendChild(sevenElement);
-            } else {
-                element.textContent = symbol.icon;
-            }
-            
-            return element;
-        }
-        
         // Вращение слотов
         function spin() {
             if (isSpinning || balance < currentBet) return;
             
             isSpinning = true;
-            resultMessage.textContent = '';
+            resultMessage.classList.remove('show');
             updateUI();
             
             // Вычитаем ставку
             balance = parseFloat((balance - currentBet).toFixed(2));
             saveBalance();
             
-            // Запускаем анимацию для всех слотов
-            slots.forEach(slot => {
-                startSlotAnimation(slot);
-            });
+            // Генерируем последовательность остановки барабанов
+            stopOrder = [0, 1, 2];
             
-            // Останавливаем слоты по очереди с задержкой
-            const stopDelays = [1800, 2300, 2800]; // Время до остановки каждого слота
+            // Запускаем вращение всех барабанов
+            startAllReels();
             
-            slots.forEach((slot, index) => {
-                setTimeout(() => {
-                    stopSlotAnimation(slot).then(symbol => {
-                        // Когда все слоты остановились
-                        if (index === slots.length - 1) {
-                            const results = Array.from(document.querySelectorAll('.slot')).map(s => 
-                                s.querySelector('.slot-item:last-child').textContent
-                            );
-                            checkWin(results);
-                            isSpinning = false;
-                            updateUI();
-                        }
-                    });
-                }, stopDelays[index]);
-            });
+            // Останавливаем барабаны по очереди с задержкой
+            stopReelsSequentially();
         }
         
-        // Запуск анимации слота
-        function startSlotAnimation(slot) {
-            // Очищаем слот
-            while (slot.firstChild) {
-                slot.removeChild(slot.firstChild);
+        // Запуск всех барабанов
+        function startAllReels() {
+            for (let i = 0; i < 3; i++) {
+                startReel(i);
             }
-            
-            // Добавляем 30 символов для плавной анимации
-            for (let i = 0; i < 30; i++) {
-                const symbol = getRandomSymbol();
-                const item = createSymbolElement(symbol);
-                item.style.transform = `translateY(${-100 * i}%)`;
-                slot.appendChild(item);
-            }
-            
-            // Запускаем анимацию
-            const startTime = Date.now();
-            const duration = 10000; // Долгая длительность, так как остановим принудительно
-            
-            function animate() {
-                if (!slot.isAnimating) return;
-                
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                const items = slot.querySelectorAll('.slot-item');
-                const visibleIndex = Math.floor(progress * (items.length - 1));
-                
-                items.forEach((item, index) => {
-                    const yPos = -100 * (index - visibleIndex);
-                    item.style.transform = `translateY(${yPos}%)`;
-                });
-                
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                }
-            }
-            
-            slot.isAnimating = true;
-            animate();
         }
         
-        // Остановка анимации слота
-        function stopSlotAnimation(slot) {
-            return new Promise(resolve => {
-                clearTimeout(slot.stopTimer);
-                
-                // Определяем финальный символ
-                const finalSymbol = getRandomSymbol();
-                
-                // Завершаем анимацию
-                slot.isAnimating = false;
-                
-                // Плавное замедление
-                const items = slot.querySelectorAll('.slot-item');
-                const currentPosition = parseInt(items[0].style.transform.split('(')[1]) || 0;
-                const targetPosition = Math.round(currentPosition / 100) * 100;
-                const startTime = Date.now();
-                const duration = 500;
-                
-                function easeOut(t) {
-                    return 1 - Math.pow(1 - t, 3);
+        // Запуск одного барабана
+        function startReel(index) {
+            const reel = reelElements[index];
+            reel.style.transition = 'none';
+            reel.style.top = '-400%';
+            
+            // Небольшая задержка для плавного старта
+            setTimeout(() => {
+                reel.style.transition = 'top 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
+                reel.style.top = '0%';
+            }, 50);
+        }
+        
+        // Последовательная остановка барабанов
+        function stopReelsSequentially() {
+            if (stopOrder.length === 0) {
+                // Все барабаны остановлены
+                checkWin();
+                isSpinning = false;
+                updateUI();
+                return;
+            }
+            
+            const reelIndex = stopOrder.shift();
+            const delay = reelIndex === 0 ? 1500 : reelIndex === 1 ? 2500 : 3500;
+            
+            setTimeout(() => {
+                stopReel(reelIndex);
+                stopReelsSequentially();
+            }, delay);
+        }
+        
+        // Остановка барабана
+        function stopReel(index) {
+            const reel = reelElements[index];
+            const targetPosition = calculateStopPosition(index);
+            
+            reel.style.transition = 'top 1.5s cubic-bezier(0.2, 0.8, 0.4, 1)';
+            reel.style.top = targetPosition;
+            
+            // Эффект при остановке
+            slotElements[index].classList.add('slot-win');
+            setTimeout(() => {
+                slotElements[index].classList.remove('slot-win');
+            }, 1500);
+        }
+        
+        // Расчет позиции остановки для выпадения случайного символа
+        function calculateStopPosition(index) {
+            // Выбираем случайный символ (с учетом весов)
+            const symbol = getRandomSymbol();
+            
+            // Находим позицию этого символа на барабане
+            const symbolIndex = reels[index].findIndex(s => s.icon === symbol.icon);
+            
+            // Рассчитываем позицию для остановки (чтобы символ оказался в центре)
+            const itemHeight = 20; // 20% высоты
+            const centerPosition = 40; // 40% от верха (центр)
+            const targetTop = centerPosition - (symbolIndex * itemHeight) - itemHeight;
+            
+            return `${targetTop}%`;
+        }
+        
+        // Выбор случайного символа с учетом весов
+        function getRandomSymbol() {
+            let random = Math.random() * symbols.reduce((sum, s) => sum + s.weight, 0);
+            for (const symbol of symbols) {
+                if (random < symbol.weight) {
+                    return symbol;
                 }
-                
-                function finishAnimation() {
-                    // Оставляем только финальный символ
-                    while (slot.firstChild) {
-                        slot.removeChild(slot.firstChild);
-                    }
-                    
-                    const finalItem = createSymbolElement(finalSymbol);
-                    slot.appendChild(finalItem);
-                    
-                    // Эффект при остановке
-                    slot.classList.add('active');
-                    setTimeout(() => {
-                        slot.classList.remove('active');
-                    }, 300);
-                    
-                    resolve(finalSymbol.icon);
-                }
-                
-                function animateStop() {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const easeProgress = easeOut(progress);
-                    
-                    items.forEach((item, index) => {
-                        const yPos = -targetPosition + (index * 100 * (1 - easeProgress));
-                        item.style.transform = `translateY(${yPos}%)`;
-                    });
-                    
-                    if (progress < 1) {
-                        requestAnimationFrame(animateStop);
-                    } else {
-                        finishAnimation();
-                    }
-                }
-                
-                animateStop();
-            });
+                random -= symbol.weight;
+            }
+            return symbols[0];
         }
         
         // Проверка выигрышной комбинации
-        function checkWin(results) {
+        function checkWin() {
+            const results = [];
+            
+            // Получаем центральные символы каждого барабана
+            for (let i = 0; i < 3; i++) {
+                const reelTop = parseFloat(reelElements[i].style.top);
+                const centerIndex = Math.floor((40 - reelTop) / 20);
+                results.push(reels[i][centerIndex].icon);
+            }
+            
+            // Определяем выигрыш
+            let winAmount = 0;
+            let winMessage = '';
+            
             // Все три одинаковых - джекпот
             if (results[0] === results[1] && results[1] === results[2]) {
-                let winAmount = 0;
-                let isBigWin = false;
-                
-                // Определяем выигрыш в зависимости от символа
                 switch(results[0]) {
-                    case '🍒':
-                        winAmount = currentBet * 5;
-                        break;
-                    case '🍋':
-                        winAmount = currentBet * 7;
-                        break;
-                    case '🍊':
-                        winAmount = currentBet * 10;
-                        break;
-                    case '🍇':
-                        winAmount = currentBet * 15;
-                        break;
-                    case '🍉':
-                        winAmount = currentBet * 20;
-                        break;
-                    case '7':
-                        winAmount = currentBet * 50;
-                        isBigWin = true;
-                        break;
-                    case '💰':
-                        winAmount = currentBet * 100;
-                        isBigWin = true;
-                        break;
-                    default:
-                        winAmount = currentBet * 5;
+                    case '🍒': winAmount = currentBet * 5; break;
+                    case '🍋': winAmount = currentBet * 7; break;
+                    case '🍊': winAmount = currentBet * 10; break;
+                    case '🍇': winAmount = currentBet * 15; break;
+                    case '🍉': winAmount = currentBet * 20; break;
+                    case '7': winAmount = currentBet * 50; break;
+                    case '💰': winAmount = currentBet * 100; break;
                 }
-                
-                balance = parseFloat((balance + winAmount).toFixed(2));
-                
-                // Анимация выигрыша
-                slots.forEach(slot => {
-                    if (isBigWin) {
-                        slot.classList.add('big-win');
-                    } else {
-                        slot.classList.add('win');
-                    }
-                    
-                    setTimeout(() => {
-                        slot.classList.remove('win', 'big-win');
-                    }, isBigWin ? 2500 : 1500);
-                });
-                
-                resultMessage.textContent = `ДЖЕКПОТ! +${winAmount.toFixed(2)} ₽`;
-                resultMessage.classList.add('win-animation');
-                setTimeout(() => {
-                    resultMessage.classList.remove('win-animation');
-                }, 1000);
+                winMessage = `ДЖЕКПОТ! +${winAmount.toFixed(2)} ₽`;
             } 
             // Два одинаковых (кроме вишенки)
             else if ((results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) && 
                     !(results[0] === '🍒' && results[1] === '🍒')) {
                 const matchingSymbol = results[0] === results[1] ? results[0] : results[2];
-                let winAmount = 0;
-                let isSeven = false;
                 
-                // Определяем выигрыш для двух одинаковых
                 switch(matchingSymbol) {
-                    case '🍋':
-                        winAmount = currentBet * 2;
-                        break;
-                    case '🍊':
-                        winAmount = currentBet * 3;
-                        break;
-                    case '🍇':
-                        winAmount = currentBet * 4;
-                        break;
-                    case '🍉':
-                        winAmount = currentBet * 5;
-                        break;
-                    case '7':
-                        winAmount = currentBet * 10;
-                        isSeven = true;
-                        break;
-                    case '💰':
-                        winAmount = currentBet * 20;
-                        break;
-                    default:
-                        winAmount = currentBet * 1.5;
+                    case '🍋': winAmount = currentBet * 2; break;
+                    case '🍊': winAmount = currentBet * 3; break;
+                    case '🍇': winAmount = currentBet * 4; break;
+                    case '🍉': winAmount = currentBet * 5; break;
+                    case '7': winAmount = currentBet * 10; break;
+                    case '💰': winAmount = currentBet * 20; break;
+                    default: winAmount = currentBet * 1.5;
                 }
-                
-                balance = parseFloat((balance + winAmount).toFixed(2));
-                
-                // Анимация для выигрышных слотов
-                if (results[0] === results[1]) {
-                    slots[0].classList.add('win');
-                    slots[1].classList.add('win');
-                    if (isSeven) {
-                        slots[0].classList.add('big-win');
-                        slots[1].classList.add('big-win');
-                    }
-                } else {
-                    slots[1].classList.add('win');
-                    slots[2].classList.add('win');
-                    if (isSeven) {
-                        slots[1].classList.add('big-win');
-                        slots[2].classList.add('big-win');
-                    }
-                }
-                
-                setTimeout(() => {
-                    slots.forEach(slot => slot.classList.remove('win', 'big-win'));
-                }, 1500);
-                
-                resultMessage.textContent = `Выигрыш! +${winAmount.toFixed(2)} ₽`;
-                resultMessage.classList.add('win-animation');
-                setTimeout(() => {
-                    resultMessage.classList.remove('win-animation');
-                }, 1000);
+                winMessage = `Выигрыш! +${winAmount.toFixed(2)} ₽`;
             }
             // Две вишенки
             else if ((results[0] === '🍒' && results[1] === '🍒') || 
                     (results[1] === '🍒' && results[2] === '🍒') || 
                     (results[0] === '🍒' && results[2] === '🍒')) {
-                const winAmount = currentBet * 1.2;
-                balance = parseFloat((balance + winAmount).toFixed(2));
-                
-                // Подсвечиваем вишенки
-                if (results[0] === '🍒' && results[1] === '🍒') {
-                    slots[0].classList.add('win');
-                    slots[1].classList.add('win');
-                } else if (results[1] === '🍒' && results[2] === '🍒') {
-                    slots[1].classList.add('win');
-                    slots[2].classList.add('win');
-                } else {
-                    slots[0].classList.add('win');
-                    slots[2].classList.add('win');
-                }
-                
-                setTimeout(() => {
-                    slots.forEach(slot => slot.classList.remove('win'));
-                }, 1000);
-                
-                resultMessage.textContent = `Выигрыш! +${winAmount.toFixed(2)} ₽`;
-                resultMessage.classList.add('win-animation');
-                setTimeout(() => {
-                    resultMessage.classList.remove('win-animation');
-                }, 1000);
+                winAmount = currentBet * 1.2;
+                winMessage = `Выигрыш! +${winAmount.toFixed(2)} ₽`;
             } else {
-                resultMessage.textContent = 'Попробуйте еще раз!';
+                winMessage = 'Попробуйте еще раз!';
             }
             
-            saveBalance();
+            // Обновляем баланс, если есть выигрыш
+            if (winAmount > 0) {
+                balance = parseFloat((balance + winAmount).toFixed(2));
+                saveBalance();
+            }
+            
+            // Показываем сообщение
+            resultMessage.textContent = winMessage;
+            resultMessage.classList.add('show');
+            resultMessage.classList.add('win-animation');
+            setTimeout(() => {
+                resultMessage.classList.remove('win-animation');
+            }, 1000);
+            
+            // Перезагружаем барабаны для следующего вращения
+            initGame();
         }
         
         // Сохранение баланса
@@ -968,7 +873,8 @@
                 window.location.href = 'index.html';
             });
             
-            // Инициализация пользователя
+            // Инициализация игры и пользователя
+            initGame();
             initUser();
             
             // Гарантированное закрытие загрузчика
