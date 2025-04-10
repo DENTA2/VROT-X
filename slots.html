@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VROT-X Слоты</title>
+    <title>Слоты</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -30,10 +30,28 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: relative;
         }
         
-        .logo {
-            color: #4285F4;
+        .back-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .back-button::before {
+            content: "←";
+            margin-right: 5px;
+        }
+        
+        .title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 20px;
             font-weight: bold;
         }
@@ -45,6 +63,7 @@
             font-size: 16px;
             display: flex;
             align-items: center;
+            margin-left: auto;
         }
         
         .balance-icon {
@@ -100,6 +119,19 @@
             transition: transform 0.1s;
         }
         
+        .seven {
+            background-color: #d63031;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(214, 48, 49, 0.7);
+        }
+        
         .controls {
             display: flex;
             flex-direction: column;
@@ -111,21 +143,21 @@
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 20px;
             width: 100%;
         }
         
         .bet-btn {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background-color: #333;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
-            min-width: 70px;
+            min-width: 60px;
         }
         
         .bet-btn.active {
@@ -197,19 +229,20 @@
             }
             
             .bet-btn {
-                padding: 8px 12px;
-                font-size: 14px;
-                min-width: 60px;
+                padding: 6px 10px;
+                font-size: 12px;
+                min-width: 50px;
             }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo">VROT-X Слоты</div>
+        <button class="back-button" id="backButton">Назад</button>
+        <div class="title">Слоты</div>
         <div class="balance-container">
             <span class="balance-icon">💰</span>
-            <span id="balance">0</span> ₽
+            <span id="balance">0.00</span> ₽
         </div>
     </div>
     
@@ -229,10 +262,12 @@
             
             <div class="controls">
                 <div class="bet-controls">
+                    <button class="bet-btn" data-bet="5">5 ₽</button>
                     <button class="bet-btn" data-bet="10">10 ₽</button>
-                    <button class="bet-btn" data-bet="50">50 ₽</button>
-                    <button class="bet-btn active" data-bet="100">100 ₽</button>
-                    <button class="bet-btn" data-bet="500">500 ₽</button>
+                    <button class="bet-btn" data-bet="25">25 ₽</button>
+                    <button class="bet-btn active" data-bet="50">50 ₽</button>
+                    <button class="bet-btn" data-bet="100">100 ₽</button>
+                    <button class="bet-btn" data-bet="1000">1000 ₽</button>
                 </div>
                 
                 <button class="spin-btn" id="spinBtn">Вращать</button>
@@ -267,8 +302,8 @@
             { icon: '🍊', weight: 20 },
             { icon: '🍇', weight: 15 },
             { icon: '🍉', weight: 7 },
-            { icon: '7', weight: 2 },
-            { icon: '💰', weight: 1 }
+            { icon: '7', weight: 3, special: true },
+            { icon: '💰', weight: 1, special: true }
         ];
         
         // Общий вес для расчета вероятностей
@@ -277,7 +312,7 @@
         // Глобальные переменные
         let userId = null;
         let userRef = null;
-        let currentBet = 100;
+        let currentBet = 50;
         let balance = 0;
         let isSpinning = false;
         let isFirebaseConnected = false;
@@ -286,6 +321,7 @@
         const balanceElement = document.getElementById('balance');
         const spinBtn = document.getElementById('spinBtn');
         const resultMessage = document.getElementById('resultMessage');
+        const backButton = document.getElementById('backButton');
         const betButtons = document.querySelectorAll('.bet-btn');
         const slots = [
             document.getElementById('slot1'),
@@ -321,16 +357,16 @@
                 if (!snapshot.exists()) {
                     // Создаем нового пользователя
                     await userRef.set({
-                        balance: 1000,
+                        balance: 1000.00,
                         created_at: new Date().toISOString(),
                         last_active: new Date().toISOString(),
                         is_local_user: true
                     });
-                    balance = 1000;
+                    balance = 1000.00;
                 } else {
                     // Получаем баланс существующего пользователя
                     const userData = snapshot.val();
-                    balance = userData.balance || 0;
+                    balance = userData.balance || 0.00;
                 }
                 
                 updateUI();
@@ -340,7 +376,7 @@
                 userRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data && data.balance !== undefined) {
-                        balance = data.balance;
+                        balance = parseFloat(data.balance.toFixed(2));
                         updateUI();
                     }
                 });
@@ -348,7 +384,7 @@
             } catch (error) {
                 console.error("Ошибка подключения к Firebase:", error);
                 // Работаем в оффлайн режиме
-                balance = localStorage.getItem('vrot-x_offlineBalance') || 1000;
+                balance = parseFloat(localStorage.getItem('vrot-x_offlineBalance') || 1000.00);
                 updateUI();
                 loadingElement.textContent = "Оффлайн режим";
                 setTimeout(() => {
@@ -359,7 +395,7 @@
         
         // Обновление интерфейса
         function updateUI() {
-            balanceElement.textContent = balance;
+            balanceElement.textContent = balance.toFixed(2);
             spinBtn.disabled = isSpinning || balance < currentBet;
             
             // Обновляем активную кнопку ставки
@@ -375,11 +411,28 @@
             let random = Math.random() * totalWeight;
             for (const symbol of symbols) {
                 if (random < symbol.weight) {
-                    return symbol.icon;
+                    return symbol;
                 }
                 random -= symbol.weight;
             }
-            return symbols[0].icon; // fallback
+            return symbols[0]; // fallback
+        }
+        
+        // Создание элемента символа
+        function createSymbolElement(symbol) {
+            const element = document.createElement('div');
+            element.className = 'slot-item';
+            
+            if (symbol.icon === '7' && symbol.special) {
+                const sevenElement = document.createElement('div');
+                sevenElement.className = 'seven';
+                sevenElement.textContent = '7';
+                element.appendChild(sevenElement);
+            } else {
+                element.textContent = symbol.icon;
+            }
+            
+            return element;
         }
         
         // Вращение слотов
@@ -391,7 +444,7 @@
             updateUI();
             
             // Вычитаем ставку
-            balance -= currentBet;
+            balance = parseFloat((balance - currentBet).toFixed(2));
             saveBalance();
             
             // Запускаем анимацию для каждого слота
@@ -408,12 +461,13 @@
         // Анимация вращения одного слота
         function spinSlot(slot, slotIndex) {
             return new Promise(resolve => {
-                const duration = 1500 + Math.random() * 1000 + slotIndex * 300;
+                const baseDuration = 1500;
+                const duration = baseDuration + Math.random() * 1000 + slotIndex * 500;
                 const startTime = Date.now();
                 const spinSymbols = [];
                 
                 // Генерируем последовательность символов для анимации
-                for (let i = 0; i < 20; i++) {
+                for (let i = 0; i < 30; i++) {
                     spinSymbols.push(getRandomSymbol());
                 }
                 
@@ -428,9 +482,7 @@
                 
                 // Создаем элементы для анимации
                 spinSymbols.forEach((symbol, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'slot-item';
-                    item.textContent = symbol;
+                    const item = createSymbolElement(symbol);
                     item.style.transform = `translateY(${-100 * index}%)`;
                     slot.appendChild(item);
                 });
@@ -439,7 +491,15 @@
                 function animate() {
                     const elapsed = Date.now() - startTime;
                     const progress = Math.min(elapsed / duration, 1);
-                    const easeProgress = easeOutCubic(progress);
+                    let easeProgress;
+                    
+                    // Докручивание в конце
+                    if (progress > 0.8) {
+                        const remaining = (progress - 0.8) / 0.2;
+                        easeProgress = 0.8 + remaining * remaining * 0.2;
+                    } else {
+                        easeProgress = progress;
+                    }
                     
                     const items = slot.querySelectorAll('.slot-item');
                     const visibleIndex = Math.floor(easeProgress * (spinSymbols.length - 1));
@@ -457,12 +517,10 @@
                             slot.removeChild(slot.firstChild);
                         }
                         
-                        const finalItem = document.createElement('div');
-                        finalItem.className = 'slot-item';
-                        finalItem.textContent = finalSymbol;
+                        const finalItem = createSymbolElement(finalSymbol);
                         slot.appendChild(finalItem);
                         
-                        resolve(finalSymbol);
+                        resolve(finalSymbol.icon);
                     }
                 }
                 
@@ -474,20 +532,78 @@
         function checkWin(results) {
             // Все три одинаковых - джекпот
             if (results[0] === results[1] && results[1] === results[2]) {
-                let winAmount = currentBet * 10;
+                let winAmount = 0;
                 
-                // Особый множитель для редких символов
-                if (results[0] === '💰') winAmount = currentBet * 50;
-                else if (results[0] === '7') winAmount = currentBet * 30;
+                // Определяем выигрыш в зависимости от символа
+                switch(results[0]) {
+                    case '🍒':
+                        winAmount = currentBet * 5;
+                        break;
+                    case '🍋':
+                        winAmount = currentBet * 7;
+                        break;
+                    case '🍊':
+                        winAmount = currentBet * 10;
+                        break;
+                    case '🍇':
+                        winAmount = currentBet * 15;
+                        break;
+                    case '🍉':
+                        winAmount = currentBet * 20;
+                        break;
+                    case '7':
+                        winAmount = currentBet * 50;
+                        break;
+                    case '💰':
+                        winAmount = currentBet * 100;
+                        break;
+                    default:
+                        winAmount = currentBet * 5;
+                }
                 
-                balance += winAmount;
-                resultMessage.textContent = `ДЖЕКПОТ! +${winAmount} ₽`;
+                balance = parseFloat((balance + winAmount).toFixed(2));
+                resultMessage.textContent = `ДЖЕКПОТ! +${winAmount.toFixed(2)} ₽`;
             } 
-            // Два одинаковых
-            else if (results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) {
-                const winAmount = currentBet * 3;
-                balance += winAmount;
-                resultMessage.textContent = `Выигрыш! +${winAmount} ₽`;
+            // Два одинаковых (кроме вишенки)
+            else if ((results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) && 
+                    !(results[0] === '🍒' && results[1] === '🍒')) {
+                const matchingSymbol = results[0] === results[1] ? results[0] : results[2];
+                let winAmount = 0;
+                
+                // Определяем выигрыш для двух одинаковых
+                switch(matchingSymbol) {
+                    case '🍋':
+                        winAmount = currentBet * 2;
+                        break;
+                    case '🍊':
+                        winAmount = currentBet * 3;
+                        break;
+                    case '🍇':
+                        winAmount = currentBet * 4;
+                        break;
+                    case '🍉':
+                        winAmount = currentBet * 5;
+                        break;
+                    case '7':
+                        winAmount = currentBet * 10;
+                        break;
+                    case '💰':
+                        winAmount = currentBet * 20;
+                        break;
+                    default:
+                        winAmount = currentBet * 1.5;
+                }
+                
+                balance = parseFloat((balance + winAmount).toFixed(2));
+                resultMessage.textContent = `Выигрыш! +${winAmount.toFixed(2)} ₽`;
+            }
+            // Две вишенки
+            else if ((results[0] === '🍒' && results[1] === '🍒') || 
+                    (results[1] === '🍒' && results[2] === '🍒') || 
+                    (results[0] === '🍒' && results[2] === '🍒')) {
+                const winAmount = currentBet * 1.2;
+                balance = parseFloat((balance + winAmount).toFixed(2));
+                resultMessage.textContent = `Выигрыш! +${winAmount.toFixed(2)} ₽`;
             } else {
                 resultMessage.textContent = 'Попробуйте еще раз!';
             }
@@ -510,11 +626,6 @@
             updateUI();
         }
         
-        // Функция плавного замедления
-        function easeOutCubic(t) {
-            return 1 - Math.pow(1 - t, 3);
-        }
-        
         // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', () => {
             // Обработчики кнопок ставок
@@ -527,6 +638,11 @@
             
             // Обработчик кнопки вращения
             spinBtn.addEventListener('click', spin);
+            
+            // Обработчик кнопки "Назад"
+            backButton.addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
             
             // Инициализация пользователя
             initUser();
