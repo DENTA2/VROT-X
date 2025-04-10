@@ -3,60 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Игровой автомат</title>
+    <title>VROT-X Слоты</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: white;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #121212;
+            color: white;
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            height: 100vh;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .logo {
+            color: #4285F4;
+            font-size: 20px;
+            font-weight: bold;
         }
         
         .balance-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
             background-color: #333;
-            padding: 10px 20px;
-            border-radius: 5px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .balance-icon {
+            margin-right: 8px;
             font-size: 18px;
         }
         
         .slot-machine {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 80px;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .slots-container {
             background-color: #222;
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
         }
         
         .slots {
             display: flex;
-            gap: 15px;
+            justify-content: space-around;
             margin-bottom: 30px;
         }
         
         .slot {
-            width: 100px;
-            height: 150px;
-            background-color: #444;
+            width: 80px;
+            height: 120px;
+            background-color: #333;
             border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 60px;
-            overflow: hidden;
+            font-size: 50px;
             position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
         
         .slot-item {
@@ -66,93 +97,155 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: transform 0.1s;
         }
         
         .controls {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            width: 100%;
         }
         
         .bet-controls {
             display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
             gap: 10px;
-            align-items: center;
-        }
-        
-        button {
-            padding: 12px 25px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .spin-btn {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-        }
-        
-        .spin-btn:hover {
-            background-color: #45a049;
+            margin-bottom: 20px;
+            width: 100%;
         }
         
         .bet-btn {
-            background-color: #555;
+            padding: 10px 15px;
+            background-color: #333;
             color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 70px;
         }
         
         .bet-btn.active {
-            background-color: #4CAF50;
+            background-color: #4285F4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
         
-        .win-message {
-            margin-top: 20px;
-            font-size: 24px;
+        .spin-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #4285F4, #34A853);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
             font-weight: bold;
-            height: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            max-width: 200px;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .spin-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .spin-btn:active {
+            transform: translateY(0);
+        }
+        
+        .spin-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .result-message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 27px;
             color: #FFD700;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            z-index: 1000;
+        }
+        
+        @media (max-width: 400px) {
+            .slot {
+                width: 70px;
+                height: 100px;
+                font-size: 40px;
+            }
+            
+            .bet-btn {
+                padding: 8px 12px;
+                font-size: 14px;
+                min-width: 60px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="balance-container">
-        Баланс: <span id="balance">0</span> ₽
+    <div class="header">
+        <div class="logo">VROT-X Слоты</div>
+        <div class="balance-container">
+            <span class="balance-icon">💰</span>
+            <span id="balance">0</span> ₽
+        </div>
     </div>
     
     <div class="slot-machine">
-        <div class="slots">
-            <div class="slot" id="slot1">
-                <div class="slot-item">🍒</div>
-            </div>
-            <div class="slot" id="slot2">
-                <div class="slot-item">🍒</div>
-            </div>
-            <div class="slot" id="slot3">
-                <div class="slot-item">🍒</div>
-            </div>
-        </div>
-        
-        <div class="controls">
-            <div class="bet-controls">
-                <button class="bet-btn" data-bet="10">10 ₽</button>
-                <button class="bet-btn" data-bet="50">50 ₽</button>
-                <button class="bet-btn active" data-bet="100">100 ₽</button>
-                <button class="bet-btn" data-bet="500">500 ₽</button>
+        <div class="slots-container">
+            <div class="slots">
+                <div class="slot" id="slot1">
+                    <div class="slot-item">🍒</div>
+                </div>
+                <div class="slot" id="slot2">
+                    <div class="slot-item">🍒</div>
+                </div>
+                <div class="slot" id="slot3">
+                    <div class="slot-item">🍒</div>
+                </div>
             </div>
             
-            <button class="spin-btn" id="spinBtn">Вращать</button>
-            
-            <div class="win-message" id="winMessage"></div>
+            <div class="controls">
+                <div class="bet-controls">
+                    <button class="bet-btn" data-bet="10">10 ₽</button>
+                    <button class="bet-btn" data-bet="50">50 ₽</button>
+                    <button class="bet-btn active" data-bet="100">100 ₽</button>
+                    <button class="bet-btn" data-bet="500">500 ₽</button>
+                </div>
+                
+                <button class="spin-btn" id="spinBtn">Вращать</button>
+                
+                <div class="result-message" id="resultMessage"></div>
+            </div>
         </div>
     </div>
 
+    <div class="loading" id="loading">Загрузка...</div>
+
     <script>
-        // Инициализация Firebase
+        // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCMos6Y7C-krTLuKCI4VJG-TFLo6QI--k8",
             authDomain: "vrot-x-7a48f.firebaseapp.com",
@@ -163,135 +256,213 @@
             appId: "1:622297225288:web:5df6a5b02ffddedd96e07d"
         };
 
-        // Инициализируем Firebase
+        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // Символы для слотов
-        const symbols = ['🍒', '🍋', '🍊', '🍇', '🍉', '7', '💰'];
+        // Символы для слотов и их веса (вероятности выпадения)
+        const symbols = [
+            { icon: '🍒', weight: 30 },
+            { icon: '🍋', weight: 25 },
+            { icon: '🍊', weight: 20 },
+            { icon: '🍇', weight: 15 },
+            { icon: '🍉', weight: 7 },
+            { icon: '7', weight: 2 },
+            { icon: '💰', weight: 1 }
+        ];
         
-        // Текущие значения
+        // Общий вес для расчета вероятностей
+        const totalWeight = symbols.reduce((sum, symbol) => sum + symbol.weight, 0);
+        
+        // Глобальные переменные
+        let userId = null;
+        let userRef = null;
         let currentBet = 100;
         let balance = 0;
         let isSpinning = false;
+        let isFirebaseConnected = false;
         
-        // Получаем элементы DOM
+        // Элементы DOM
         const balanceElement = document.getElementById('balance');
         const spinBtn = document.getElementById('spinBtn');
-        const winMessage = document.getElementById('winMessage');
+        const resultMessage = document.getElementById('resultMessage');
         const betButtons = document.querySelectorAll('.bet-btn');
         const slots = [
             document.getElementById('slot1'),
             document.getElementById('slot2'),
             document.getElementById('slot3')
         ];
+        const loadingElement = document.getElementById('loading');
         
-        // Устанавливаем обработчики событий
-        betButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                currentBet = parseInt(button.dataset.bet);
-                betButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-            });
-        });
+        // Получаем или создаем ID пользователя
+        function getOrCreateUserId() {
+            let localUserId = localStorage.getItem('vrot-x_userId');
+            if (!localUserId) {
+                localUserId = 'local_' + Math.random().toString(36).substr(2, 12) + 
+                            '_' + Date.now().toString(36);
+                localStorage.setItem('vrot-x_userId', localUserId);
+            }
+            return localUserId;
+        }
         
-        spinBtn.addEventListener('click', spin);
-        
-        // Загружаем баланс из Firebase
-        function loadBalance() {
-            // Здесь нужно указать путь к данным пользователя
-            // Временно используем тестовый путь
-            const userId = 'test_user';
-            const userRef = database.ref('users/' + userId);
+        // Инициализация пользователя
+        async function initUser() {
+            userId = getOrCreateUserId();
+            userRef = database.ref('users/' + userId);
             
-            userRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.balance) {
-                    balance = data.balance;
-                    balanceElement.textContent = balance;
-                } else {
-                    // Если пользователя нет, создаем с начальным балансом
+            try {
+                // Проверяем соединение с Firebase
+                await database.ref('.info/connected').once('value');
+                isFirebaseConnected = true;
+                
+                // Загружаем данные пользователя
+                const snapshot = await userRef.once('value');
+                
+                if (!snapshot.exists()) {
+                    // Создаем нового пользователя
+                    await userRef.set({
+                        balance: 1000,
+                        created_at: new Date().toISOString(),
+                        last_active: new Date().toISOString(),
+                        is_local_user: true
+                    });
                     balance = 1000;
-                    userRef.set({ balance: balance });
-                    balanceElement.textContent = balance;
+                } else {
+                    // Получаем баланс существующего пользователя
+                    const userData = snapshot.val();
+                    balance = userData.balance || 0;
                 }
+                
+                updateUI();
+                loadingElement.style.display = 'none';
+                
+                // Слушаем изменения баланса в реальном времени
+                userRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data && data.balance !== undefined) {
+                        balance = data.balance;
+                        updateUI();
+                    }
+                });
+                
+            } catch (error) {
+                console.error("Ошибка подключения к Firebase:", error);
+                // Работаем в оффлайн режиме
+                balance = localStorage.getItem('vrot-x_offlineBalance') || 1000;
+                updateUI();
+                loadingElement.textContent = "Оффлайн режим";
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                }, 1500);
+            }
+        }
+        
+        // Обновление интерфейса
+        function updateUI() {
+            balanceElement.textContent = balance;
+            spinBtn.disabled = isSpinning || balance < currentBet;
+            
+            // Обновляем активную кнопку ставки
+            betButtons.forEach(btn => {
+                const btnBet = parseInt(btn.dataset.bet);
+                btn.classList.toggle('active', btnBet === currentBet);
+                btn.disabled = isSpinning || balance < btnBet;
             });
         }
         
-        // Функция вращения
-        function spin() {
-            if (isSpinning) return;
-            if (balance < currentBet) {
-                winMessage.textContent = 'Недостаточно средств!';
-                return;
+        // Выбор случайного символа с учетом весов
+        function getRandomSymbol() {
+            let random = Math.random() * totalWeight;
+            for (const symbol of symbols) {
+                if (random < symbol.weight) {
+                    return symbol.icon;
+                }
+                random -= symbol.weight;
             }
+            return symbols[0].icon; // fallback
+        }
+        
+        // Вращение слотов
+        function spin() {
+            if (isSpinning || balance < currentBet) return;
             
             isSpinning = true;
-            winMessage.textContent = '';
+            resultMessage.textContent = '';
+            updateUI();
             
             // Вычитаем ставку
             balance -= currentBet;
-            updateBalance();
+            saveBalance();
             
-            // Анимация вращения
-            const spins = [];
-            for (let i = 0; i < 3; i++) {
-                spins[i] = spinSlot(i);
-            }
+            // Запускаем анимацию для каждого слота
+            const spins = slots.map((slot, index) => spinSlot(slot, index));
             
-            // Проверяем результаты после остановки
+            // Когда все слоты остановились
             Promise.all(spins).then(results => {
                 checkWin(results);
                 isSpinning = false;
+                updateUI();
             });
         }
         
-        // Вращение одного слота
-        function spinSlot(slotIndex) {
+        // Анимация вращения одного слота
+        function spinSlot(slot, slotIndex) {
             return new Promise(resolve => {
-                const slot = slots[slotIndex];
-                const duration = 2000 + Math.random() * 1000; // 2-3 секунды
+                const duration = 1500 + Math.random() * 1000 + slotIndex * 300;
                 const startTime = Date.now();
+                const spinSymbols = [];
                 
-                // Создаем элементы для анимации
-                for (let i = 0; i < 5; i++) {
-                    const item = document.createElement('div');
-                    item.className = 'slot-item';
-                    item.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-                    slot.appendChild(item);
+                // Генерируем последовательность символов для анимации
+                for (let i = 0; i < 20; i++) {
+                    spinSymbols.push(getRandomSymbol());
                 }
                 
+                // Финальный символ
+                const finalSymbol = getRandomSymbol();
+                spinSymbols.push(finalSymbol);
+                
+                // Очищаем слот
+                while (slot.firstChild) {
+                    slot.removeChild(slot.firstChild);
+                }
+                
+                // Создаем элементы для анимации
+                spinSymbols.forEach((symbol, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'slot-item';
+                    item.textContent = symbol;
+                    item.style.transform = `translateY(${-100 * index}%)`;
+                    slot.appendChild(item);
+                });
+                
+                // Анимация
                 function animate() {
                     const elapsed = Date.now() - startTime;
                     const progress = Math.min(elapsed / duration, 1);
                     const easeProgress = easeOutCubic(progress);
                     
-                    // Перемещаем элементы
                     const items = slot.querySelectorAll('.slot-item');
+                    const visibleIndex = Math.floor(easeProgress * (spinSymbols.length - 1));
+                    
                     items.forEach((item, index) => {
-                        const yPos = -100 * (index - easeProgress * (items.length - 1));
+                        const yPos = -100 * (index - visibleIndex);
                         item.style.transform = `translateY(${yPos}%)`;
                     });
                     
                     if (progress < 1) {
                         requestAnimationFrame(animate);
                     } else {
-                        // Оставляем только центральный элемент
-                        const centerIndex = Math.floor(items.length / 2);
-                        const result = items[centerIndex].textContent;
-                        
-                        // Очищаем слот
+                        // Оставляем только финальный символ
                         while (slot.firstChild) {
                             slot.removeChild(slot.firstChild);
                         }
                         
-                        // Добавляем результат
-                        const resultItem = document.createElement('div');
-                        resultItem.className = 'slot-item';
-                        resultItem.textContent = result;
-                        slot.appendChild(resultItem);
+                        const finalItem = document.createElement('div');
+                        finalItem.className = 'slot-item';
+                        finalItem.textContent = finalSymbol;
+                        slot.appendChild(finalItem);
                         
-                        resolve(result);
+                        resolve(finalSymbol);
                     }
                 }
                 
@@ -299,43 +470,74 @@
             });
         }
         
-        // Проверка выигрыша
+        // Проверка выигрышной комбинации
         function checkWin(results) {
             // Все три одинаковых - джекпот
             if (results[0] === results[1] && results[1] === results[2]) {
-                const winAmount = currentBet * 10;
+                let winAmount = currentBet * 10;
+                
+                // Особый множитель для редких символов
+                if (results[0] === '💰') winAmount = currentBet * 50;
+                else if (results[0] === '7') winAmount = currentBet * 30;
+                
                 balance += winAmount;
-                winMessage.textContent = `Джекпот! +${winAmount} ₽`;
+                resultMessage.textContent = `ДЖЕКПОТ! +${winAmount} ₽`;
             } 
-            // Два одинаковых - маленький выигрыш
+            // Два одинаковых
             else if (results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) {
-                const winAmount = currentBet * 2;
+                const winAmount = currentBet * 3;
                 balance += winAmount;
-                winMessage.textContent = `Выигрыш! +${winAmount} ₽`;
+                resultMessage.textContent = `Выигрыш! +${winAmount} ₽`;
             } else {
-                winMessage.textContent = 'Повезет в следующий раз!';
+                resultMessage.textContent = 'Попробуйте еще раз!';
             }
             
-            updateBalance();
+            saveBalance();
         }
         
-        // Обновление баланса в Firebase
-        function updateBalance() {
-            balanceElement.textContent = balance;
+        // Сохранение баланса
+        function saveBalance() {
+            if (isFirebaseConnected) {
+                userRef.update({
+                    balance: balance,
+                    last_active: new Date().toISOString()
+                });
+            } else {
+                // Сохраняем в localStorage для оффлайн режима
+                localStorage.setItem('vrot-x_offlineBalance', balance);
+            }
             
-            const userId = 'test_user';
-            database.ref('users/' + userId).update({
-                balance: balance
-            });
+            updateUI();
         }
         
-        // Функция для плавного замедления анимации
+        // Функция плавного замедления
         function easeOutCubic(t) {
             return 1 - Math.pow(1 - t, 3);
         }
         
-        // Загружаем баланс при загрузке страницы
-        window.addEventListener('load', loadBalance);
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            // Обработчики кнопок ставок
+            betButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentBet = parseInt(btn.dataset.bet);
+                    updateUI();
+                });
+            });
+            
+            // Обработчик кнопки вращения
+            spinBtn.addEventListener('click', spin);
+            
+            // Инициализация пользователя
+            initUser();
+            
+            // Гарантированное закрытие загрузчика
+            setTimeout(() => {
+                if (loadingElement.style.display !== 'none') {
+                    loadingElement.style.display = 'none';
+                }
+            }, 5000);
+        });
     </script>
 </body>
 </html>
