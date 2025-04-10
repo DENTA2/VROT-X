@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль аккаунта - VROT-X</title>
     <style>
-        /* Стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -205,59 +204,6 @@
             cursor: not-allowed;
         }
 
-        .history-container {
-            width: 100%;
-            max-width: 400px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .history-title {
-            font-weight: bold;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 18px;
-        }
-
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .history-table th {
-            text-align: left;
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
-            font-weight: bold;
-        }
-
-        .history-table td {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .history-type {
-            font-weight: 500;
-        }
-
-        .history-amount.positive {
-            color: #4CAF50;
-            font-weight: bold;
-        }
-
-        .history-amount.negative {
-            color: #f44336;
-            font-weight: bold;
-        }
-
-        .no-history {
-            text-align: center;
-            color: #777;
-            padding: 20px 0;
-        }
-
         .loader {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #4285F4;
@@ -381,23 +327,6 @@
                 <button class="promo-button" id="promoButton">✓</button>
             </div>
         </div>
-
-        <div class="history-container">
-            <div class="history-title">История операций</div>
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Тип</th>
-                        <th>Сумма</th>
-                    </tr>
-                </thead>
-                <tbody id="historyBody">
-                    <tr>
-                        <td colspan="2" class="no-history">Загрузка истории...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -421,9 +350,6 @@
         // Глобальные переменные
         let userId = null;
         let dbRef = null;
-        let lastBalance = 0;
-        let isFirstLoad = true;
-        let lastOperationWasPromo = false;
 
         // Получение ID пользователя из localStorage
         function getUserId() {
@@ -462,72 +388,6 @@
             }, 5000);
         }
 
-        // Форматирование даты в формат "дд.мм чч:мм"
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            return `${day}.${month} ${hours}:${minutes}`;
-        }
-
-        // Обновление истории операций
-        function updateHistory(history) {
-            const historyBody = document.getElementById('historyBody');
-            
-            if (!history || history.length === 0) {
-                historyBody.innerHTML = `
-                    <tr>
-                        <td colspan="2" class="no-history">Нет операций</td>
-                    </tr>
-                `;
-                return;
-            }
-
-            // Берем последние 10 операций и переворачиваем порядок (новые сверху)
-            const last10 = history.slice(-10).reverse();
-            
-            historyBody.innerHTML = last10.map(op => {
-                let operationType = '';
-                let formattedDate = formatDate(op.date);
-                
-                if (op.type === 'promo') {
-                    operationType = `Промокод (${formattedDate})`;
-                } else if (op.type === 'system') {
-                    operationType = `Система (${formattedDate})`;
-                } else if (op.type === 'admin') {
-                    operationType = `Админ (${formattedDate})`;
-                } else {
-                    operationType = op.type;
-                }
-
-                return `
-                    <tr>
-                        <td class="history-type">${operationType}</td>
-                        <td class="history-amount ${op.amount >= 0 ? 'positive' : 'negative'}">
-                            ${op.amount >= 0 ? '+' : ''}${op.amount.toFixed(2)} ₽
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        // Добавление операции в историю
-        async function addOperationToHistory(userId, operation) {
-            try {
-                const userSnapshot = await database.ref('users/' + userId).once('value');
-                const userData = userSnapshot.val();
-                const history = userData?.history || [];
-                
-                await database.ref('users/' + userId).update({
-                    history: [...history, operation]
-                });
-            } catch (error) {
-                console.error('Ошибка добавления операции в историю:', error);
-            }
-        }
-
         // Активация промокода
         async function activatePromo(promoCode) {
             const userId = getUserId();
@@ -546,7 +406,7 @@
                 
                 // Проверяем промокод
                 if (promoCode.toUpperCase() === 'FREE') {
-                    // Обновляем баланс и добавляем операцию в историю
+                    // Обновляем баланс
                     const newBalance = (userData?.balance || 0) + 50;
                     
                     await database.ref('users/' + userId).update({
@@ -554,14 +414,6 @@
                         promo: true
                     });
                     
-                    // Добавляем запись о промокоде
-                    await addOperationToHistory(userId, {
-                        type: 'promo',
-                        amount: 50,
-                        date: new Date().toISOString()
-                    });
-                    
-                    lastOperationWasPromo = true;
                     showNotification('success', 'Промокод активирован! +50₽');
                 } else {
                     showNotification('error', 'Промокод не найден');
@@ -610,36 +462,18 @@
             dbRef.on('value', (snapshot) => {
                 const userData = snapshot.val();
                 if (userData) {
-                    const currentBalance = userData.balance || 0;
-                    
                     // Обновляем баланс
                     const balanceLoader = document.getElementById('balanceLoader');
                     const balanceAmount = document.getElementById('balanceAmount');
                     
                     balanceLoader.style.display = 'none';
                     balanceAmount.style.display = 'inline';
-                    balanceAmount.textContent = `${currentBalance.toFixed(2)} ₽`;
-                    
-                    // Проверяем изменение баланса
-                    if (!isFirstLoad && lastBalance !== currentBalance && !lastOperationWasPromo) {
-                        // Добавляем системную операцию
-                        addOperationToHistory(userId, {
-                            type: 'system',
-                            amount: currentBalance - lastBalance,
-                            date: new Date().toISOString()
-                        });
-                    }
-                    
-                    lastBalance = currentBalance;
-                    isFirstLoad = false;
+                    balanceAmount.textContent = `${(userData.balance || 0).toFixed(2)} ₽`;
                     
                     // Обновляем имя, если есть
                     if (userData.username) {
                         document.getElementById('username').textContent = userData.username;
                     }
-
-                    // Обновляем историю операций
-                    updateHistory(userData.history);
                 }
             });
         }
