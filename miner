@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINER | VROT-X</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            user-select: none;
+        }
+        
+        body {
+            background-color: #121212;
+            color: white;
+            padding: 15px;
+            max-width: 500px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .back-button {
+            color: #1a73e8;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 5px 0;
+        }
+        
+        .logo {
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        .balance-container {
+            border: 1px solid #1a73e8;
+            border-radius: 12px;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .balance {
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cell.revealed {
+            background: #4caf50;
+        }
+        
+        .cell.bomb {
+            background: #f44336;
+            opacity: 0.5;
+            transition: opacity 1s;
+        }
+        
+        .cell .content {
+            z-index: 2;
+        }
+        
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .particle {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .explosion {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,100,100,0.8) 0%, rgba(255,50,50,0) 70%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 3;
+        }
+        
+        .multipliers-container {
+            overflow-x: auto;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .multipliers-track {
+            display: inline-flex;
+            gap: 8px;
+        }
+        
+        .multiplier {
+            padding: 8px 12px;
+            border-radius: 5px;
+            background: #1e1e1e;
+            color: #888;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .multiplier-value {
+            font-size: 14px;
+        }
+        
+        .multiplier-step {
+            font-size: 10px;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+        
+        .multiplier.current {
+            background: #333;
+            color: white;
+        }
+        
+        .multiplier.win {
+            background: #2e7d32;
+            color: white;
+        }
+        
+        .multiplier.lose {
+            background: #c62828;
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: auto;
+        }
+        
+        .bet-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .bet-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .bet-title {
+            color: #1a73e8;
+            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .bet-amount {
+            flex: 1;
+            position: relative;
+        }
+        
+        .bet-amount input {
+            width: 100%;
+            padding: 12px;
+            background: #1e1e1e;
+            border: 1px solid #1a73e8;
+            border-radius: 5px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .bet-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .bet-buttons button {
+            padding: 8px 12px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .mines-control {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .mines-title {
+            color: #1a73e8;
+            font-weight: bold;
+            white-space: nowrap;
+            margin-right: 5px;
+        }
+        
+        .mines-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+        
+        .mines-buttons button {
+            padding: 8px 12px;
+            background: #1e1e1e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .mines-buttons button.active {
+            background: #1a73e8;
+        }
+        
+        .action-button {
+            padding: 15px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+        
+        .action-button:disabled {
+            background: #333;
+            color: #888;
+            cursor: not-allowed;
+        }
+        
+        .cooldown-timer {
+            position: absolute;
+            right: 15px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+        }
+        
+        .loading-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 8px solid transparent;
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+        
+        .loading-text {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        
+        .win-notification {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30, 30, 30, 0.8);
+            color: #4caf50;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #4caf50;
+            text-align: center;
+            z-index: 1001;
+            width: 80%;
+            max-width: 300px;
+        }
+        
+        .win-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4caf50;
+        }
+        
+        .win-details {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .balance-change {
+            font-size: 14px;
+            color: #888;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .balance-change span {
+            margin: 0 5px;
+        }
+        
+        .notification-close {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            color: white;
+        }
+        
+        .no-balance {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(30, 30, 30, 0.9);
+            color: #f44336;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #f44336;
+            text-align: center;
+            z-index: 1001;
+            width: 80%;
+            max-width: 300px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        
+        @keyframes dust {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-spinner">
+            <div class="loading-circle"></div>
+        </div>
+        <div class="loading-text" id="loadingText">Получение данных... 0%</div>
+    </div>
+
+    <div class="no-balance" id="noBalance" style="display: none;">Недостаточный баланс для игры</div>
+
+    <div class="header">
+        <div class="back-button" onclick="goBack()">← Назад</div>
+        <div class="logo">VROT-X</div>
+        <div class="balance-container">
+            <div class="balance" id="balance">0 ₽</div>
+        </div>
+    </div>
+
+    <div class="game-board" id="gameBoard"></div>
+
+    <div class="multipliers-container">
+        <div class="multipliers-track" id="multipliersTrack"></div>
+    </div>
+
+    <div class="controls">
+        <div class="bet-controls">
+            <div class="bet-row">
+                <div class="bet-title">Ставка:</div>
+                <div class="bet-amount">
+                    <input type="number" id="betAmount" min="1" step="1" value="1" max="999999">
+                </div>
+                <div class="bet-buttons">
+                    <button id="minBet">MIN</button>
+                    <button id="halfBet">1/2</button>
+                    <button id="doubleBet">2x</button>
+                    <button id="maxBet">MAX</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mines-control">
+            <div class="mines-title">Бомбы:</div>
+            <div class="mines-buttons">
+                <button data-mines="2">2</button>
+                <button data-mines="3">3</button>
+                <button data-mines="5" class="active">5</button>
+                <button data-mines="10">10</button>
+                <button data-mines="24">24</button>
+            </div>
+        </div>
+
+        <button class="action-button" id="actionButton">
+            Играть
+            <span class="cooldown-timer" id="cooldownTimer"></span>
+        </button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script>
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMos6Y7C-krTLuKCI4VJG-TFLo6QI--k8",
+            authDomain: "vrot-x-7a48f.firebaseapp.com",
+            databaseURL: "https://vrot-x-7a48f-default-rtdb.firebaseio.com",
+            projectId: "vrot-x-7a48f",
+            storageBucket: "vrot-x-7a48f.firebasestorage.app",
+            messagingSenderId: "622297225288",
+            appId: "1:622297225288:web:5df6a5b02ffddedd96e07d"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Глобальные переменные
+        let userId = null;
+        let dbRef = null;
+        let balance = 0;
+        let currentBet = 0;
+        let minesCount = 5;
+        let gameActive = false;
+        let revealedCells = 0;
+        let bombPositions = [];
+        let currentMultiplier = 1.0;
+        let multiplierHistory = [];
+        let isFirebaseConnected = false;
+        let cooldownActive = false;
+        let cooldownInterval = null;
+        let currentNotification = null;
+
+        // Элементы интерфейса
+        const loadingElement = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        const noBalanceElement = document.getElementById('noBalance');
+        const balanceElement = document.getElementById('balance');
+        const gameBoard = document.getElementById('gameBoard');
+        const multipliersTrack = document.getElementById('multipliersTrack');
+        const betAmountInput = document.getElementById('betAmount');
+        const minBetButton = document.getElementById('minBet');
+        const halfBetButton = document.getElementById('halfBet');
+        const doubleBetButton = document.getElementById('doubleBet');
+        const maxBetButton = document.getElementById('maxBet');
+        const minesButtons = document.querySelectorAll('.mines-buttons button');
+        const actionButton = document.getElementById('actionButton');
+        const cooldownTimer = document.getElementById('cooldownTimer');
+
+        // Создать частицы пыли
+        function createDustParticles(element) {
+            const particles = document.createElement('div');
+            particles.className = 'particles';
+            
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                const size = Math.random() * 4 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.animation = `dust ${Math.random() * 0.5 + 0.3}s ease-out forwards`;
+                
+                particles.appendChild(particle);
+            }
+            
+            element.appendChild(particles);
+            
+            setTimeout(() => {
+                particles.remove();
+            }, 500);
+        }
+
+        // Создать эффект взрыва
+        function createExplosion(element) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.animation = 'explode 0.5s ease-out forwards';
+            
+            element.appendChild(explosion);
+            
+            setTimeout(() => {
+                explosion.remove();
+            }, 500);
+        }
+
+        // Показать уведомление о победе
+        function showWinNotification(multiplier, winAmount, oldBalance, newBalance) {
+            // Удаляем предыдущее уведомление
+            if (currentNotification) {
+                currentNotification.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = 'win-notification';
+            
+            notification.innerHTML = `
+                <div class="notification-close">×</div>
+                <div class="win-title">Поздравляем!</div>
+                <div class="win-details">x${multiplier.toFixed(2)} / +${winAmount.toFixed(2)} ₽</div>
+                <div class="balance-change">
+                    ${oldBalance} ₽ <span>→</span> ${newBalance} ₽
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            currentNotification = notification;
+            
+            // Закрытие по клику на крестик
+            notification.querySelector('.notification-close').addEventListener('click', () => {
+                notification.remove();
+                currentNotification = null;
+            });
+            
+            // Автозакрытие через 10 секунд
+            setTimeout(() => {
+                notification.remove();
+                currentNotification = null;
+            }, 10000);
+        }
+
+        // Активировать кулдаун кнопки
+        function activateCooldown() {
+            if (cooldownActive) return;
+            
+            cooldownActive = true;
+            actionButton.disabled = true;
+            cooldownTimer.textContent = 'Откат 0.5';
+            
+            let timeLeft = 0.5;
+            clearInterval(cooldownInterval);
+            
+            cooldownInterval = setInterval(() => {
+                timeLeft -= 0.1;
+                if (timeLeft <= 0) {
+                    clearInterval(cooldownInterval);
+                    cooldownTimer.textContent = '';
+                    actionButton.disabled = false;
+                    cooldownActive = false;
+                    updateControls();
+                } else {
+                    cooldownTimer.textContent = `Откат ${timeLeft.toFixed(1)}`;
+                }
+            }, 100);
+        }
+
+        // Обновить состояние элементов управления
+        function updateControls() {
+            const hasBalance = balance >= 1;
+            const shouldShowNoBalance = !hasBalance && !gameActive;
+            
+            noBalanceElement.style.display = shouldShowNoBalance ? 'block' : 'none';
+            
+            // Блокируем или разблокируем элементы управления
+            betAmountInput.disabled = !hasBalance || gameActive;
+            minBetButton.disabled = !hasBalance || gameActive;
+            halfBetButton.disabled = !hasBalance || gameActive;
+            doubleBetButton.disabled = !hasBalance || gameActive;
+            maxBetButton.disabled = !hasBalance || gameActive;
+            
+            minesButtons.forEach(button => {
+                button.disabled = !hasBalance || gameActive;
+            });
+            
+            actionButton.disabled = !hasBalance || cooldownActive || gameActive;
+        }
+
+        // Генерация/получение ID пользователя
+        function getUserId() {
+            // Пытаемся получить Telegram ID
+            try {
+                const tg = window.Telegram?.WebApp;
+                if (tg?.initDataUnsafe?.user?.id) {
+                    return 'tg_' + tg.initDataUnsafe.user.id;
+                }
+            } catch (e) {
+                console.log("Telegram WebApp not available");
+            }
+            
+            // Если Telegram не доступен, используем localStorage
+            let localUserId = localStorage.getItem('vrot-x_userId');
+            if (!localUserId) {
+                localUserId = 'local_' + Math.random().toString(36).substr(2, 12) + 
+                            '_' + Date.now().toString(36);
+                localStorage.setItem('vrot-x_userId', localUserId);
+            }
+            return localUserId;
+        }
+
+        // Инициализация пользователя и загрузка баланса
+        async function initUser() {
+            userId = getUserId();
+            dbRef = database.ref('users/' + userId);
+            
+            // Анимация загрузки
+            let progress = 0;
+            const loadingInterval = setInterval(() => {
+                progress += 2;
+                if (progress > 100) progress = 100;
+                loadingText.textContent = `Получение данных... ${progress}%`;
+                
+                if (progress === 100) {
+                    clearInterval(loadingInterval);
+                }
+            }, 50);
+            
+            try {
+                // Проверяем соединение с Firebase
+                const connectedRef = database.ref('.info/connected');
+                connectedRef.on('value', (snap) => {
+                    isFirebaseConnected = snap.val() === true;
+                });
+                
+                // Загружаем данные пользователя
+                const snapshot = await dbRef.once('value');
+                
+                if (snapshot.exists()) {
+                    balance = parseInt(snapshot.val().balance) || 0;
+                } else {
+                    // Создаем нового пользователя
+                    balance = 0;
+                    await dbRef.set({
+                        balance: balance,
+                        created_at: new Date().toISOString(),
+                        last_active: new Date().toISOString()
+                    });
+                }
+                
+                updateUI();
+                
+                // Слушаем изменения баланса в реальном времени
+                dbRef.on('value', (snap) => {
+                    if (snap.exists()) {
+                        const newBalance = parseInt(snap.val().balance) || 0;
+                        if (newBalance !== balance) {
+                            balance = newBalance;
+                            updateUI();
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error("Ошибка загрузки:", error);
+                handleLoadError();
+            } finally {
+                // Завершаем анимацию загрузки через 2.5 секунды
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                    updateControls();
+                }, 2500);
+            }
+        }
+
+        // Обработка ошибки загрузки
+        function handleLoadError() {
+            balance = 0;
+            updateUI();
+            loadingText.textContent = "Оффлайн режим (баланс не сохраняется)";
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            balanceElement.textContent = balance + ' ₽';
+            updateControls();
+            
+            // Обновляем максимальную ставку в инпуте
+            betAmountInput.max = balance;
+        }
+
+        // Возврат на главную страницу
+        function goBack() {
+            window.location.href = "index.html";
+        }
+
+        // Инициализация игрового поля
+        function initGameBoard() {
+            gameBoard.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                const content = document.createElement('div');
+                content.className = 'content';
+                content.textContent = '?';
+                cell.appendChild(content);
+                
+                cell.addEventListener('click', () => handleCellClick(i));
+                gameBoard.appendChild(cell);
+            }
+        }
+
+        // Настройка элементов управления
+        function setupControls() {
+            // Ограничение ввода до целых чисел
+            betAmountInput.addEventListener('input', function() {
+                let value = this.value;
+                if (value.includes('.')) {
+                    this.value = value.split('.')[0];
+                }
+                if (isNaN(this.value)) {
+                    this.value = 1;
+                }
+                updateControls();
+            });
+            
+            // Кнопки ставок
+            minBetButton.addEventListener('click', () => {
+                betAmountInput.value = '1';
+                updateControls();
+            });
+            
+            halfBetButton.addEventListener('click', () => {
+                const current = parseInt(betAmountInput.value) || 0;
+                const newValue = Math.max(1, Math.floor(current / 2));
+                betAmountInput.value = newValue;
+                updateControls();
+            });
+            
+            doubleBetButton.addEventListener('click', () => {
+                const current = parseInt(betAmountInput.value) || 0;
+                const newValue = Math.min(balance, current * 2);
+                betAmountInput.value = newValue;
+                updateControls();
+            });
+            
+            maxBetButton.addEventListener('click', () => {
+                if (balance > 0) {
+                    betAmountInput.value = balance;
+                    updateControls();
+                }
+            });
+            
+            // Кнопки выбора количества мин
+            minesButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    minesButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    minesCount = parseInt(button.dataset.mines);
+                    updateMultipliersDisplay();
+                    updateControls();
+                });
+            });
+            
+            // Кнопка действия
+            actionButton.addEventListener('click', () => {
+                if (currentNotification) {
+                    currentNotification.remove();
+                    currentNotification = null;
+                }
+                
+                if (gameActive) {
+                    collectWinnings();
+                } else {
+                    startGame();
+                }
+            });
+            
+            // Обновляем отображение множителей
+            updateMultipliersDisplay();
+        }
+
+        // Начало игры
+        function startGame() {
+            currentBet = parseInt(betAmountInput.value);
+            
+            if (isNaN(currentBet) || currentBet <= 0) {
+                return;
+            }
+            
+            if (currentBet < 1) {
+                return;
+            }
+            
+            if (currentBet > balance) {
+                return;
+            }
+            
+            // Снимаем ставку с баланса
+            balance -= currentBet;
+            updateBalanceInDB(balance);
+            updateUI();
+            
+            // Генерируем позиции бомб
+            generateBombs();
+            
+            // Сбрасываем игровые переменные
+            revealedCells = 0;
+            currentMultiplier = 1.0;
+            multiplierHistory = [];
+            
+            // Обновляем интерфейс
+            gameActive = true;
+            actionButton.textContent = 'Сделайте ход';
+            actionButton.disabled = true;
+            
+            // Очищаем поле
+            initGameBoard();
+            updateMultipliersDisplay();
+            updateControls();
+        }
+
+        // Генерация позиций бомб
+        function generateBombs() {
+            bombPositions = [];
+            while (bombPositions.length < minesCount) {
+                const randomPos = Math.floor(Math.random() * 25);
+                if (!bombPositions.includes(randomPos)) {
+                    bombPositions.push(randomPos);
+                }
+            }
+        }
+
+        // Обработка клика по клетке
+        function handleCellClick(index) {
+            if (!gameActive) return;
+            
+            const cell = gameBoard.children[index];
+            if (cell.classList.contains('revealed')) return;
+            
+            cell.classList.add('revealed');
+            
+            if (bombPositions.includes(index)) {
+                // Нашли бомбу
+                const content = cell.querySelector('.content');
+                content.textContent = '💣';
+                createExplosion(cell);
+                
+                // Плавное появление мин
+                setTimeout(() => {
+                    cell.classList.add('bomb');
+                }, 100);
+                
+                // Добавляем проигрыш в историю множителей
+                markLastMultiplier('lose');
+                endGame();
+            } else {
+                // Пустая клетка
+                const content = cell.querySelector('.content');
+                content.textContent = '💎';
+                createDustParticles(cell);
+                
+                revealedCells++;
+                
+                // Проверяем, не открыты ли все безопасные клетки
+                if (revealedCells === (25 - minesCount)) {
+                    // Все безопасные клетки открыты - автоматический выигрыш
+                    updateMultiplier();
+                    collectWinnings();
+                    return;
+                }
+                
+                updateMultiplier();
+                actionButton.disabled = false;
+                actionButton.textContent = `Забрать ${(currentBet * currentMultiplier).toFixed(2)} ₽`;
+            }
+        }
+
+        // Обновление множителя
+        function updateMultiplier() {
+            const totalCells = 25;
+            const safeCells = totalCells - minesCount;
+            const probability = (safeCells - revealedCells) / (totalCells - revealedCells);
+            currentMultiplier = parseFloat((1 / probability).toFixed(2));
+            
+            updateMultipliersDisplay();
+        }
+
+        // Обновление отображения множителей
+        function updateMultipliersDisplay() {
+            multipliersTrack.innerHTML = '';
+            multiplierHistory = [];
+            
+            const totalCells = 25;
+            const safeCells = totalCells - minesCount;
+            
+            // Создаем элементы множителей (без последнего бесконечного)
+            for (let i = 0; i < safeCells; i++) {
+                const probability = (safeCells - i) / (totalCells - i);
+                const multiplier = (1 / probability).toFixed(2);
+                
+                const multiplierElement = document.createElement('div');
+                multiplierElement.className = 'multiplier';
+                
+                const valueElement = document.createElement('div');
+                valueElement.className = 'multiplier-value';
+                valueElement.textContent = `x${multiplier}`;
+                
+                const stepElement = document.createElement('div');
+                stepElement.className = 'multiplier-step';
+                stepElement.textContent = `Ход ${i+1}`;
+                
+                multiplierElement.appendChild(valueElement);
+                multiplierElement.appendChild(stepElement);
+                
+                if (i === revealedCells) {
+                    multiplierElement.classList.add('current');
+                }
+                
+                multipliersTrack.appendChild(multiplierElement);
+                multiplierHistory.push(multiplierElement);
+            }
+            
+            // Прокручиваем к текущему множителю
+            if (multiplierHistory[revealedCells]) {
+                multiplierHistory[revealedCells].scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+            }
+        }
+
+        // Пометить последний множитель (победа/проигрыш)
+        function markLastMultiplier(status) {
+            const lastMultiplier = multiplierHistory[multiplierHistory.length - 1];
+            if (lastMultiplier) {
+                lastMultiplier.classList.add(status);
+            }
+        }
+
+        // Забрать выигрыш
+        function collectWinnings() {
+            const winAmount = parseFloat((currentBet * currentMultiplier).toFixed(2));
+            const oldBalance = balance;
+            balance += winAmount;
+            updateBalanceInDB(balance);
+            markLastMultiplier('win');
+            
+            // Показываем уведомление о победе
+            showWinNotification(currentMultiplier, winAmount, oldBalance, balance);
+            
+            endGame();
+        }
+
+        // Обновление баланса в БД
+        function updateBalanceInDB(newBalance) {
+            if (isFirebaseConnected && dbRef) {
+                dbRef.update({ 
+                    balance: newBalance,
+                    last_active: new Date().toISOString()
+                }).catch(error => {
+                    console.error("Ошибка сохранения баланса:", error);
+                });
+            }
+        }
+
+        // Завершение игры
+        function endGame() {
+            gameActive = false;
+            actionButton.textContent = 'Играть';
+            
+            // Плавное появление всех мин
+            bombPositions.forEach(pos => {
+                const cell = gameBoard.children[pos];
+                if (!cell.classList.contains('revealed')) {
+                    const content = cell.querySelector('.content');
+                    content.textContent = '💣';
+                    setTimeout(() => {
+                        cell.classList.add('bomb');
+                    }, 100);
+                }
+            });
+            
+            // Активируем кулдаун
+            activateCooldown();
+            updateControls();
+        }
+
+        // Инициализация игры
+        function initGame() {
+            initGameBoard();
+            setupControls();
+            initUser();
+        }
+
+        // Запуск игры при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
