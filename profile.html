@@ -422,6 +422,7 @@
         let dbRef = null;
         let lastBalance = 0;
         let isFirstLoad = true;
+        let lastOperationWasPromo = false;
 
         // Получение ID пользователя из localStorage
         function getUserId() {
@@ -460,6 +461,16 @@
             }, 5000);
         }
 
+        // Форматирование даты в формат "дд.мм чч:мм"
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${day}.${month} ${hours}:${minutes}`;
+        }
+
         // Обновление истории операций
         function updateHistory(history) {
             const historyBody = document.getElementById('historyBody');
@@ -477,20 +488,15 @@
             const last10 = history.slice(-10).reverse();
             
             historyBody.innerHTML = last10.map(op => {
-                // Форматируем дату в нужный формат (дд.мм чч:мм)
-                const date = new Date(op.date);
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                const formattedDate = `${day}.${month} ${hours}:${minutes}`;
-
-                // Определяем тип операции для отображения
-                let operationType = op.type === 'promo' ? 'Промокод' : 'Система';
+                let operationType = '';
+                let formattedDate = formatDate(op.date);
                 
-                // Если это промокод, добавляем дату к типу
                 if (op.type === 'promo') {
                     operationType = `Промокод (${formattedDate})`;
+                } else if (op.type === 'system') {
+                    operationType = `Система (${formattedDate})`;
+                } else {
+                    operationType = op.type;
                 }
 
                 return `
@@ -507,18 +513,14 @@
         // Добавление системной операции
         async function addSystemOperation(userId, currentBalance, newBalance) {
             const difference = newBalance - currentBalance;
-            if (difference === 0) return;
+            if (difference === 0 || lastOperationWasPromo) {
+                lastOperationWasPromo = false;
+                return;
+            }
 
             try {
                 const userSnapshot = await database.ref('users/' + userId).once('value');
                 const userData = userSnapshot.val();
-                
-                // Проверяем, была ли последняя операция промокодом
-                const lastOperation = userData?.history?.slice(-1)[0];
-                if (lastOperation && lastOperation.type === 'promo') {
-                    return; // Не добавляем системную операцию после промокода
-                }
-                
                 const history = userData?.history || [];
                 
                 await database.ref('users/' + userId).update({
@@ -565,6 +567,7 @@
                         }]
                     });
                     
+                    lastOperationWasPromo = true;
                     showNotification('success', 'Промокод активирован! +50₽');
                 } else {
                     showNotification('error', 'Промокод не найден');
