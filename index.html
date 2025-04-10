@@ -148,7 +148,7 @@
                 <div class="game-icon">🎲</div>
                 <div class="game-name">Кости</div>
             </div>
-            <div class="game-card" onclick="openGame('slots')">
+            <div class="game-card" onclick="goToSlots()">
                 <div class="game-icon">🎰</div>
                 <div class="game-name">Слоты</div>
             </div>
@@ -243,9 +243,6 @@
                 case 'dice':
                     alert('Игра "Кости" в разработке');
                     break;
-                case 'slots':
-                    alert('Игра "Слоты" в разработке');
-                    break;
                 case 'wheel':
                     alert('Игра "Колесо" в разработке');
                     break;
@@ -257,6 +254,11 @@
         // Переход в профиль
         function goToProfile() {
             window.location.href = "profile.html";
+        }
+
+        // Переход на страницу слотов
+        function goToSlots() {
+            window.location.href = "slots.html";
         }
 
         // Инициализация при загрузке страницы
