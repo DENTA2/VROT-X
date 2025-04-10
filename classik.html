@@ -133,6 +133,12 @@
         .increase-bet {
             margin-top: 10px;
         }
+        
+        .no-rooms {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
     </style>
 </head>
 <body>
@@ -146,7 +152,7 @@
         <div id="join-menu" style="display: none;">
             <h2>Выберите комнату</h2>
             <div id="room-list" class="room-list">
-                <!-- Список комнат будет здесь -->
+                <div class="no-rooms">Нет доступных комнат</div>
             </div>
             <button id="back-to-main-btn" class="btn btn-danger">Назад</button>
         </div>
@@ -211,6 +217,7 @@
         let yourBet = 1;
         let opponentBet = 1;
         let gameState = 'waiting'; // waiting, betting, spinning, finished
+        let roomsRef = null;
 
         // DOM элементы
         const mainMenu = document.getElementById('main-menu');
@@ -255,9 +262,6 @@
             mainMenu.style.display = 'none';
             waitingRoom.style.display = 'block';
             roomIdDisplay.textContent = `ID комнаты: ${currentRoomId}`;
-            
-            // Обновляем список комнат для других игроков
-            updateRoomListForOthers();
         });
 
         // Присоединение к списку комнат
@@ -271,6 +275,9 @@
 
         // Назад в главное меню
         backToMainBtn.addEventListener('click', () => {
+            if (roomsRef) {
+                roomsRef.off();
+            }
             joinMenu.style.display = 'none';
             mainMenu.style.display = 'block';
         });
@@ -309,47 +316,56 @@
             }
         });
 
-        // Обновление списка комнат для других игроков
-        function updateRoomListForOthers() {
-            database.ref('rooms/' + currentRoomId).onDisconnect().remove();
-        }
-
         // Загрузка списка комнат
         function loadRoomList() {
-            roomList.innerHTML = '';
+            roomList.innerHTML = '<div class="no-rooms">Загрузка комнат...</div>';
             
-            database.ref('rooms').orderByChild('status').equalTo('waiting').on('value', (snapshot) => {
+            // Отключаем предыдущий слушатель, если он был
+            if (roomsRef) {
+                roomsRef.off();
+            }
+            
+            // Слушаем изменения в списке комнат
+            roomsRef = database.ref('rooms').orderByChild('status').equalTo('waiting');
+            roomsRef.on('value', (snapshot) => {
                 const rooms = snapshot.val();
                 
                 if (!rooms) {
-                    roomList.innerHTML = '<p>Нет доступных комнат</p>';
+                    roomList.innerHTML = '<div class="no-rooms">Нет доступных комнат</div>';
                     return;
                 }
                 
-                roomList.innerHTML = '';
+                let hasAvailableRooms = false;
+                let roomsHTML = '';
                 
                 for (const roomId in rooms) {
                     if (rooms[roomId].player2 === null && roomId !== currentUserId) {
-                        const roomCard = document.createElement('div');
-                        roomCard.className = 'room-card';
-                        roomCard.innerHTML = `
-                            <div>
-                                <strong>${rooms[roomId].creatorName || 'Игрок ' + roomId.substr(5, 4)}</strong>
-                                <p>ID: ${roomId}</p>
+                        hasAvailableRooms = true;
+                        roomsHTML += `
+                            <div class="room-card">
+                                <div>
+                                    <strong>${rooms[roomId].creatorName || 'Игрок ' + roomId.substr(5, 4)}</strong>
+                                    <p>ID: ${roomId}</p>
+                                </div>
+                                <button class="btn join-room" data-room="${roomId}">Присоединиться</button>
                             </div>
-                            <button class="btn join-room" data-room="${roomId}">Присоединиться</button>
                         `;
-                        roomList.appendChild(roomCard);
                     }
                 }
                 
-                // Добавляем обработчики для кнопок присоединения
-                document.querySelectorAll('.join-room').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const roomId = e.target.getAttribute('data-room');
-                        joinRoom(roomId);
+                if (hasAvailableRooms) {
+                    roomList.innerHTML = roomsHTML;
+                    
+                    // Добавляем обработчики для кнопок присоединения
+                    document.querySelectorAll('.join-room').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const roomId = e.target.getAttribute('data-room');
+                            joinRoom(roomId);
+                        });
                     });
-                });
+                } else {
+                    roomList.innerHTML = '<div class="no-rooms">Нет доступных комнат</div>';
+                }
             });
         }
 
@@ -519,7 +535,7 @@
             if (currentRoomId) {
                 if (isCreator) {
                     database.ref('rooms/' + currentRoomId).remove();
-                } else {
+                } else if (gameState !== 'finished') {
                     database.ref('rooms/' + currentRoomId).update({
                         player2: null,
                         status: 'waiting'
