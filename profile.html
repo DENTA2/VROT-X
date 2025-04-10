@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль аккаунта - VROT-X</title>
     <style>
+        /* Стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -495,6 +496,8 @@
                     operationType = `Промокод (${formattedDate})`;
                 } else if (op.type === 'system') {
                     operationType = `Система (${formattedDate})`;
+                } else if (op.type === 'admin') {
+                    operationType = `Админ (${formattedDate})`;
                 } else {
                     operationType = op.type;
                 }
@@ -510,28 +513,18 @@
             }).join('');
         }
 
-        // Добавление системной операции
-        async function addSystemOperation(userId, currentBalance, newBalance) {
-            const difference = newBalance - currentBalance;
-            if (difference === 0 || lastOperationWasPromo) {
-                lastOperationWasPromo = false;
-                return;
-            }
-
+        // Добавление операции в историю
+        async function addOperationToHistory(userId, operation) {
             try {
                 const userSnapshot = await database.ref('users/' + userId).once('value');
                 const userData = userSnapshot.val();
                 const history = userData?.history || [];
                 
                 await database.ref('users/' + userId).update({
-                    history: [...history, {
-                        type: 'system',
-                        amount: difference,
-                        date: new Date().toISOString()
-                    }]
+                    history: [...history, operation]
                 });
             } catch (error) {
-                console.error('Ошибка добавления системной операции:', error);
+                console.error('Ошибка добавления операции в историю:', error);
             }
         }
 
@@ -553,18 +546,19 @@
                 
                 // Проверяем промокод
                 if (promoCode.toUpperCase() === 'FREE') {
-                    // Обновляем баланс и отмечаем промокод как использованный
+                    // Обновляем баланс и добавляем операцию в историю
                     const newBalance = (userData?.balance || 0) + 50;
-                    const history = userData?.history || [];
                     
                     await database.ref('users/' + userId).update({
                         balance: newBalance,
-                        promo: true,
-                        history: [...history, {
-                            type: 'promo',
-                            amount: 50,
-                            date: new Date().toISOString()
-                        }]
+                        promo: true
+                    });
+                    
+                    // Добавляем запись о промокоде
+                    await addOperationToHistory(userId, {
+                        type: 'promo',
+                        amount: 50,
+                        date: new Date().toISOString()
                     });
                     
                     lastOperationWasPromo = true;
@@ -612,39 +606,42 @@
             dbRef = database.ref('users/' + userId);
             document.getElementById('userId').textContent = `ID: ${userId}`;
 
-            // Обновляем данные каждую секунду
-            setInterval(() => {
-                dbRef.once('value').then((snapshot) => {
-                    const userData = snapshot.val();
-                    if (userData) {
-                        const currentBalance = userData.balance || 0;
-                        
-                        // Обновляем баланс
-                        const balanceLoader = document.getElementById('balanceLoader');
-                        const balanceAmount = document.getElementById('balanceAmount');
-                        
-                        balanceLoader.style.display = 'none';
-                        balanceAmount.style.display = 'inline';
-                        balanceAmount.textContent = `${currentBalance.toFixed(2)} ₽`;
-                        
-                        // Проверяем изменение баланса
-                        if (!isFirstLoad && lastBalance !== currentBalance) {
-                            addSystemOperation(userId, lastBalance, currentBalance);
-                        }
-                        
-                        lastBalance = currentBalance;
-                        isFirstLoad = false;
-                        
-                        // Обновляем имя, если есть
-                        if (userData.username) {
-                            document.getElementById('username').textContent = userData.username;
-                        }
-
-                        // Обновляем историю операций
-                        updateHistory(userData.history);
+            // Слушаем изменения в реальном времени
+            dbRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                if (userData) {
+                    const currentBalance = userData.balance || 0;
+                    
+                    // Обновляем баланс
+                    const balanceLoader = document.getElementById('balanceLoader');
+                    const balanceAmount = document.getElementById('balanceAmount');
+                    
+                    balanceLoader.style.display = 'none';
+                    balanceAmount.style.display = 'inline';
+                    balanceAmount.textContent = `${currentBalance.toFixed(2)} ₽`;
+                    
+                    // Проверяем изменение баланса
+                    if (!isFirstLoad && lastBalance !== currentBalance && !lastOperationWasPromo) {
+                        // Добавляем системную операцию
+                        addOperationToHistory(userId, {
+                            type: 'system',
+                            amount: currentBalance - lastBalance,
+                            date: new Date().toISOString()
+                        });
                     }
-                });
-            }, 1000); // Обновление каждую секунду
+                    
+                    lastBalance = currentBalance;
+                    isFirstLoad = false;
+                    
+                    // Обновляем имя, если есть
+                    if (userData.username) {
+                        document.getElementById('username').textContent = userData.username;
+                    }
+
+                    // Обновляем историю операций
+                    updateHistory(userData.history);
+                }
+            });
         }
 
         function goBack() {
