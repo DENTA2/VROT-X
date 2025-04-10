@@ -58,19 +58,22 @@
             background-color: #0077a3;
         }
         
-        .room-list {
-            width: 100%;
-            margin-top: 20px;
+        .btn-disabled {
+            background-color: #555;
+            cursor: not-allowed;
         }
         
         .room-card {
             background-color: #1e1e1e;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .room-card.disabled {
+            background-color: #333;
+            color: #888;
         }
         
         .game-container {
@@ -134,10 +137,9 @@
             margin-top: 10px;
         }
         
-        .no-rooms {
-            text-align: center;
-            padding: 20px;
-            color: #888;
+        .waiting-text {
+            margin: 20px 0;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -145,22 +147,14 @@
     <div class="container">
         <div id="main-menu">
             <h1>UP-X Классик</h1>
-            <button id="create-room-btn" class="btn btn-primary">Создать комнату</button>
-            <button id="join-room-btn" class="btn">Присоединиться</button>
-        </div>
-        
-        <div id="join-menu" style="display: none;">
-            <h2>Выберите комнату</h2>
-            <div id="room-list" class="room-list">
-                <div class="no-rooms">Нет доступных комнат</div>
+            <div id="room-card" class="room-card">
+                <h2>Классик - базовый</h2>
+                <p id="players-count">1/2</p>
+                <p>Стоимость участия: 1р</p>
+                <button id="join-room-btn" class="btn">Войти в комнату</button>
+                <button id="leave-room-btn" class="btn btn-danger" style="display: none;">Выйти из комнаты</button>
+                <p id="room-status" class="waiting-text"></p>
             </div>
-            <button id="back-to-main-btn" class="btn btn-danger">Назад</button>
-        </div>
-        
-        <div id="waiting-room" style="display: none;">
-            <h2>Ожидание соперника</h2>
-            <p id="room-id-display"></p>
-            <button id="cancel-room-btn" class="btn btn-danger">Отменить комнату</button>
         </div>
         
         <div id="game-container" class="game-container">
@@ -208,28 +202,26 @@
         const database = firebase.database();
 
         // Глобальные переменные
+        const ROOM_ID = "classic_room";
         let currentUserId = localStorage.getItem('user_id') || 'user_' + Math.random().toString(36).substr(2, 8);
         localStorage.setItem('user_id', currentUserId);
-        let currentRoomId = null;
+        let isInRoom = false;
         let isCreator = false;
         let gameInterval = null;
         let timeLeft = 30;
         let yourBet = 1;
         let opponentBet = 1;
         let gameState = 'waiting'; // waiting, betting, spinning, finished
-        let roomsRef = null;
+        let roomRef = null;
 
         // DOM элементы
         const mainMenu = document.getElementById('main-menu');
-        const joinMenu = document.getElementById('join-menu');
-        const waitingRoom = document.getElementById('waiting-room');
         const gameContainer = document.getElementById('game-container');
-        const roomList = document.getElementById('room-list');
-        const createRoomBtn = document.getElementById('create-room-btn');
+        const roomCard = document.getElementById('room-card');
         const joinRoomBtn = document.getElementById('join-room-btn');
-        const backToMainBtn = document.getElementById('back-to-main-btn');
-        const cancelRoomBtn = document.getElementById('cancel-room-btn');
-        const roomIdDisplay = document.getElementById('room-id-display');
+        const leaveRoomBtn = document.getElementById('leave-room-btn');
+        const playersCount = document.getElementById('players-count');
+        const roomStatus = document.getElementById('room-status');
         const timerElement = document.getElementById('timer');
         const yourBetElement = document.getElementById('your-bet');
         const opponentBetElement = document.getElementById('opponent-bet');
@@ -238,61 +230,159 @@
         const slotMachine = document.getElementById('slot-machine');
         const resultElement = document.getElementById('result');
 
-        // Создание комнаты
-        createRoomBtn.addEventListener('click', () => {
-            isCreator = true;
-            currentRoomId = currentUserId;
+        // Инициализация комнаты
+        function initRoom() {
+            roomRef = database.ref('rooms/' + ROOM_ID);
             
-            // Создаем комнату в базе данных
-            database.ref('rooms/' + currentRoomId).set({
-                creator: currentUserId,
-                creatorName: "Игрок " + currentUserId.substr(5, 4),
-                player1: currentUserId,
-                player1Bet: 1,
-                player2: null,
-                player2Bet: 1,
-                status: 'waiting',
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            });
-            
-            // Подписываемся на изменения комнаты
-            subscribeToRoomChanges(currentRoomId);
-            
-            // Показываем экран ожидания
-            mainMenu.style.display = 'none';
-            waitingRoom.style.display = 'block';
-            roomIdDisplay.textContent = `ID комнаты: ${currentRoomId}`;
-        });
-
-        // Присоединение к списку комнат
-        joinRoomBtn.addEventListener('click', () => {
-            mainMenu.style.display = 'none';
-            joinMenu.style.display = 'block';
-            
-            // Загружаем список доступных комнат
-            loadRoomList();
-        });
-
-        // Назад в главное меню
-        backToMainBtn.addEventListener('click', () => {
-            if (roomsRef) {
-                roomsRef.off();
-            }
-            joinMenu.style.display = 'none';
-            mainMenu.style.display = 'block';
-        });
-
-        // Отмена создания комнаты
-        cancelRoomBtn.addEventListener('click', () => {
-            if (isCreator) {
-                // Удаляем комнату из базы данных
-                database.ref('rooms/' + currentRoomId).remove();
-                currentRoomId = null;
-                isCreator = false;
+            // Слушаем изменения в комнате
+            roomRef.on('value', (snapshot) => {
+                const room = snapshot.val();
                 
-                waitingRoom.style.display = 'none';
-                mainMenu.style.display = 'block';
+                if (!room) {
+                    // Комната не существует, создаем базовую структуру
+                    roomRef.set({
+                        player1: null,
+                        player1Bet: 1,
+                        player2: null,
+                        player2Bet: 1,
+                        status: 'waiting',
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    return;
+                }
+                
+                updateRoomUI(room);
+                
+                // Если мы в комнате, подписываемся на изменения игры
+                if (isInRoom) {
+                    handleGameState(room);
+                }
+            });
+        }
+
+        // Обновление интерфейса комнаты
+        function updateRoomUI(room) {
+            const players = [];
+            if (room.player1) players.push(room.player1);
+            if (room.player2) players.push(room.player2);
+            
+            const playersCountValue = players.length;
+            playersCount.textContent = `${playersCountValue}/2`;
+            
+            // Блокируем комнату, если игра уже идет
+            if (room.status !== 'waiting' && room.status !== 'waiting') {
+                roomCard.classList.add('disabled');
+                joinRoomBtn.classList.add('btn-disabled');
+                joinRoomBtn.disabled = true;
+                roomStatus.textContent = "Идет игра > Подождите";
+            } else {
+                roomCard.classList.remove('disabled');
+                joinRoomBtn.classList.remove('btn-disabled');
+                joinRoomBtn.disabled = false;
+                roomStatus.textContent = playersCountValue === 0 ? "Комната свободна" : "Ожидание игроков";
             }
+            
+            // Показываем кнопку выхода, если мы в комнате
+            if (isInRoom) {
+                joinRoomBtn.style.display = 'none';
+                leaveRoomBtn.style.display = 'inline-block';
+                
+                // Отключаем кнопку выхода, если уже 2 игрока
+                leaveRoomBtn.disabled = playersCountValue === 2;
+            } else {
+                joinRoomBtn.style.display = 'inline-block';
+                leaveRoomBtn.style.display = 'none';
+            }
+        }
+
+        // Обработка состояний игры
+        function handleGameState(room) {
+            if (room.status === 'betting' && gameState !== 'betting') {
+                // Начало игры
+                gameState = 'betting';
+                mainMenu.style.display = 'none';
+                gameContainer.style.display = 'block';
+                startGameTimer();
+            } else if (room.status === 'spinning' && gameState !== 'spinning') {
+                // Начало вращения
+                gameState = 'spinning';
+                startSpinning();
+            } else if (room.status === 'finished' && gameState !== 'finished') {
+                // Игра завершена
+                gameState = 'finished';
+                const winnerId = room.winner;
+                showResult(winnerId);
+            }
+            
+            // Обновляем ставки
+            if (isCreator || room.player2 === currentUserId) {
+                yourBet = room.player2Bet || 1;
+                opponentBet = room.player1Bet || 1;
+            } else {
+                yourBet = room.player1Bet || 1;
+                opponentBet = room.player2Bet || 1;
+            }
+            
+            updateBetDisplay();
+        }
+
+        // Вход в комнату
+        joinRoomBtn.addEventListener('click', () => {
+            roomRef.transaction((room) => {
+                if (!room) {
+                    room = {
+                        player1: null,
+                        player1Bet: 1,
+                        player2: null,
+                        player2Bet: 1,
+                        status: 'waiting',
+                        timestamp: firebase.database.ServerValue.TIMESTAMP
+                    };
+                }
+                
+                if (room.status !== 'waiting' && room.status !== 'waiting') return; // Не входим, если игра идет
+                
+                if (!room.player1) {
+                    room.player1 = currentUserId;
+                    room.player1Bet = 1;
+                    isCreator = true;
+                } else if (!room.player2 && room.player1 !== currentUserId) {
+                    room.player2 = currentUserId;
+                    room.player2Bet = 1;
+                    isCreator = false;
+                } else {
+                    return; // Уже в комнате или комната полная
+                }
+                
+                isInRoom = true;
+                return room;
+            });
+        });
+
+        // Выход из комнаты
+        leaveRoomBtn.addEventListener('click', () => {
+            roomRef.transaction((room) => {
+                if (!room) return;
+                
+                if (room.player1 === currentUserId) {
+                    room.player1 = null;
+                    room.player1Bet = 1;
+                    
+                    // Если был второй игрок, он становится первым
+                    if (room.player2) {
+                        room.player1 = room.player2;
+                        room.player1Bet = room.player2Bet;
+                        room.player2 = null;
+                        room.player2Bet = 1;
+                    }
+                } else if (room.player2 === currentUserId) {
+                    room.player2 = null;
+                    room.player2Bet = 1;
+                }
+                
+                isInRoom = false;
+                return room;
+            });
         });
 
         // Увеличение ставки
@@ -303,138 +393,16 @@
                 
                 // Обновляем ставку в базе данных
                 if (isCreator) {
-                    database.ref('rooms/' + currentRoomId).update({
+                    roomRef.update({
                         player1Bet: yourBet
                     });
                 } else {
-                    database.ref('rooms/' + currentRoomId).update({
+                    roomRef.update({
                         player2Bet: yourBet
                     });
                 }
-                
-                updateBetDisplay();
             }
         });
-
-        // Загрузка списка комнат
-        function loadRoomList() {
-            roomList.innerHTML = '<div class="no-rooms">Загрузка комнат...</div>';
-            
-            // Отключаем предыдущий слушатель, если он был
-            if (roomsRef) {
-                roomsRef.off();
-            }
-            
-            // Слушаем изменения в списке комнат
-            roomsRef = database.ref('rooms').orderByChild('status').equalTo('waiting');
-            roomsRef.on('value', (snapshot) => {
-                const rooms = snapshot.val();
-                
-                if (!rooms) {
-                    roomList.innerHTML = '<div class="no-rooms">Нет доступных комнат</div>';
-                    return;
-                }
-                
-                let hasAvailableRooms = false;
-                let roomsHTML = '';
-                
-                for (const roomId in rooms) {
-                    if (rooms[roomId].player2 === null && roomId !== currentUserId) {
-                        hasAvailableRooms = true;
-                        roomsHTML += `
-                            <div class="room-card">
-                                <div>
-                                    <strong>${rooms[roomId].creatorName || 'Игрок ' + roomId.substr(5, 4)}</strong>
-                                    <p>ID: ${roomId}</p>
-                                </div>
-                                <button class="btn join-room" data-room="${roomId}">Присоединиться</button>
-                            </div>
-                        `;
-                    }
-                }
-                
-                if (hasAvailableRooms) {
-                    roomList.innerHTML = roomsHTML;
-                    
-                    // Добавляем обработчики для кнопок присоединения
-                    document.querySelectorAll('.join-room').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            const roomId = e.target.getAttribute('data-room');
-                            joinRoom(roomId);
-                        });
-                    });
-                } else {
-                    roomList.innerHTML = '<div class="no-rooms">Нет доступных комнат</div>';
-                }
-            });
-        }
-
-        // Присоединение к комнате
-        function joinRoom(roomId) {
-            currentRoomId = roomId;
-            isCreator = false;
-            
-            database.ref('rooms/' + roomId).update({
-                player2: currentUserId,
-                status: 'betting'
-            });
-            
-            // Подписываемся на изменения комнаты
-            subscribeToRoomChanges(roomId);
-            
-            joinMenu.style.display = 'none';
-            gameContainer.style.display = 'block';
-            gameState = 'betting';
-            startGameTimer();
-        }
-
-        // Подписка на изменения комнаты
-        function subscribeToRoomChanges(roomId) {
-            database.ref('rooms/' + roomId).on('value', (snapshot) => {
-                const room = snapshot.val();
-                
-                if (!room) {
-                    // Комната была удалена
-                    if (waitingRoom.style.display === 'block') {
-                        waitingRoom.style.display = 'none';
-                        mainMenu.style.display = 'block';
-                    }
-                    if (gameContainer.style.display === 'block') {
-                        gameContainer.style.display = 'none';
-                        mainMenu.style.display = 'block';
-                    }
-                    return;
-                }
-                
-                // Обновляем информацию о ставках
-                if (isCreator) {
-                    yourBet = room.player1Bet || 1;
-                    opponentBet = room.player2Bet || 1;
-                } else {
-                    yourBet = room.player2Bet || 1;
-                    opponentBet = room.player1Bet || 1;
-                }
-                
-                updateBetDisplay();
-                
-                // Обработка статуса комнаты
-                if (room.status === 'betting' && waitingRoom.style.display === 'block') {
-                    // Если мы создатель и кто-то присоединился
-                    waitingRoom.style.display = 'none';
-                    gameContainer.style.display = 'block';
-                    gameState = 'betting';
-                    startGameTimer();
-                } else if (room.status === 'spinning') {
-                    // Начало вращения
-                    gameState = 'spinning';
-                    startSpinning();
-                } else if (room.status === 'finished') {
-                    // Игра завершена
-                    gameState = 'finished';
-                    showResult(room.winner);
-                }
-            });
-        }
 
         // Обновление отображения ставок
         function updateBetDisplay() {
@@ -455,7 +423,7 @@
                 if (timeLeft <= 0) {
                     clearInterval(gameInterval);
                     // Переходим к вращению
-                    database.ref('rooms/' + currentRoomId).update({
+                    roomRef.update({
                         status: 'spinning'
                     });
                 }
@@ -495,10 +463,10 @@
             const isWinner = Math.random() < yourChance;
             
             const winnerId = isWinner ? currentUserId : 
-                            (isCreator ? database.ref('rooms/' + currentRoomId).player2 : database.ref('rooms/' + currentRoomId).player1);
+                            (isCreator ? roomRef.player2 : roomRef.player1);
             
             // Обновляем статус комнаты
-            database.ref('rooms/' + currentRoomId).update({
+            roomRef.update({
                 status: 'finished',
                 winner: winnerId,
                 prize: totalBet
@@ -519,30 +487,53 @@
             
             resultElement.style.display = 'block';
             
-            // Через 10 секунд удаляем комнату и возвращаем в меню
+            // Через 10 секунд сбрасываем комнату
             setTimeout(() => {
-                database.ref('rooms/' + currentRoomId).remove();
+                roomRef.update({
+                    player1: null,
+                    player1Bet: 1,
+                    player2: null,
+                    player2Bet: 1,
+                    status: 'waiting',
+                    winner: null,
+                    prize: null
+                });
+                
                 gameContainer.style.display = 'none';
                 mainMenu.style.display = 'block';
                 resultElement.style.display = 'none';
-                currentRoomId = null;
-                isCreator = false;
+                isInRoom = false;
             }, 10000);
         }
 
         // Очистка при выходе
         window.addEventListener('beforeunload', () => {
-            if (currentRoomId) {
-                if (isCreator) {
-                    database.ref('rooms/' + currentRoomId).remove();
-                } else if (gameState !== 'finished') {
-                    database.ref('rooms/' + currentRoomId).update({
-                        player2: null,
-                        status: 'waiting'
-                    });
-                }
+            if (isInRoom) {
+                roomRef.transaction((room) => {
+                    if (!room) return;
+                    
+                    if (room.player1 === currentUserId) {
+                        room.player1 = null;
+                        room.player1Bet = 1;
+                        
+                        if (room.player2) {
+                            room.player1 = room.player2;
+                            room.player1Bet = room.player2Bet;
+                            room.player2 = null;
+                            room.player2Bet = 1;
+                        }
+                    } else if (room.player2 === currentUserId) {
+                        room.player2 = null;
+                        room.player2Bet = 1;
+                    }
+                    
+                    return room;
+                });
             }
         });
+
+        // Инициализация при загрузке
+        initRoom();
     </script>
 </body>
 </html>
