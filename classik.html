@@ -12,63 +12,76 @@
             background-color: #121212;
             color: white;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
         
         .container {
-            max-width: 800px;
             width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .balance {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
         }
         
         .btn {
             background-color: #4CAF50;
             border: none;
             color: white;
-            padding: 15px 32px;
+            padding: 12px 24px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
             font-size: 16px;
             margin: 10px 5px;
             cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s;
+            border-radius: 25px;
+            transition: all 0.3s;
         }
         
         .btn:hover {
-            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        
+        .btn-bet {
+            background-color: #333;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .btn-bet.active {
+            background-color: #4CAF50;
+            box-shadow: 0 0 15px #4CAF50;
         }
         
         .btn-danger {
             background-color: #f44336;
         }
         
-        .btn-danger:hover {
-            background-color: #d32f2f;
-        }
-        
-        .btn-primary {
-            background-color: #008CBA;
-        }
-        
-        .btn-primary:hover {
-            background-color: #0077a3;
-        }
-        
-        .btn-disabled {
-            background-color: #555;
-            cursor: not-allowed;
-        }
-        
         .room-card {
             background-color: #1e1e1e;
             padding: 20px;
             margin: 20px 0;
-            border-radius: 10px;
+            border-radius: 15px;
             text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         
         .room-card.disabled {
@@ -82,103 +95,175 @@
             text-align: center;
         }
         
-        .timer {
+        .timer-container {
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+            position: relative;
+        }
+        
+        .timer-circle {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .timer-bg {
+            fill: none;
+            stroke: #333;
+            stroke-width: 8;
+        }
+        
+        .timer-progress {
+            fill: none;
+            stroke: #4CAF50;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 1s linear;
+        }
+        
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             font-size: 24px;
-            margin: 20px 0;
+            font-weight: bold;
         }
         
         .bet-container {
             display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
         }
         
-        .player-bet {
-            background-color: #1e1e1e;
-            padding: 15px;
-            border-radius: 5px;
-            width: 45%;
+        .player-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+            border: 3px solid;
+            object-fit: cover;
+        }
+        
+        .avatar-you {
+            border-color: #4CAF50;
+        }
+        
+        .avatar-opponent {
+            border-color: #f44336;
         }
         
         .slot-machine {
-            font-size: 48px;
-            margin: 30px 0;
-            height: 60px;
-            overflow: hidden;
+            width: 100%;
+            height: 150px;
             position: relative;
+            overflow: hidden;
+            margin: 30px 0;
+            border-radius: 10px;
+            background-color: #1e1e1e;
         }
         
-        .slot-digit {
+        .slot-content {
+            display: flex;
             position: absolute;
-            width: 100%;
-            text-align: center;
-            transition: transform 1s ease-out;
+            width: 200%;
+            height: 100%;
+            left: 0;
+            transition: transform 0.1s;
+        }
+        
+        .slot-avatar {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .result {
-            font-size: 24px;
+            font-size: 28px;
             margin: 20px 0;
             font-weight: bold;
-            color: #4CAF50;
             display: none;
         }
         
-        .bet-input {
-            padding: 10px;
-            font-size: 16px;
-            width: 100px;
-            text-align: center;
-            margin-right: 10px;
-            border-radius: 5px;
-            border: none;
+        .win {
+            color: #4CAF50;
         }
         
-        .increase-bet {
-            margin-top: 10px;
+        .lose {
+            color: #f44336;
         }
         
-        .waiting-text {
-            margin: 20px 0;
+        .bet-amount {
             font-size: 18px;
+            margin-top: 5px;
+            color: #4CAF50;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
+    <div class="balance" id="balance">1000р</div>
+    
     <div class="container">
         <div id="main-menu">
             <h1>UP-X Классик</h1>
             <div id="room-card" class="room-card">
                 <h2>Классик - базовый</h2>
-                <p id="players-count">1/2</p>
+                <p id="players-count">0/2</p>
                 <p>Стоимость участия: 1р</p>
                 <button id="join-room-btn" class="btn">Войти в комнату</button>
                 <button id="leave-room-btn" class="btn btn-danger" style="display: none;">Выйти из комнаты</button>
-                <p id="room-status" class="waiting-text"></p>
+                <p id="room-status" style="margin-top: 15px;"></p>
             </div>
         </div>
         
         <div id="game-container" class="game-container">
-            <h2>Игра началась!</h2>
-            <div class="timer" id="timer">30</div>
+            <div class="timer-container">
+                <svg class="timer-circle" viewBox="0 0 36 36">
+                    <path class="timer-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="timer-progress" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div class="timer-text" id="timer">30</div>
+            </div>
+            
+            <div class="player-info">
+                <img src="https://i.imgur.com/JqYeYnR.png" class="avatar avatar-you" id="your-avatar">
+                <div id="your-bet">Ваша ставка: <span class="bet-amount">1р</span></div>
+            </div>
+            
+            <div class="player-info">
+                <img src="https://i.imgur.com/3QZxJ9u.png" class="avatar avatar-opponent" id="opponent-avatar">
+                <div id="opponent-bet">Ставка соперника: <span class="bet-amount">1р</span></div>
+            </div>
             
             <div class="bet-container">
-                <div class="player-bet" id="player1-bet">
-                    <h3>Вы</h3>
-                    <p id="your-bet">Ставка: 1р</p>
-                </div>
-                <div class="player-bet" id="player2-bet">
-                    <h3>Соперник</h3>
-                    <p id="opponent-bet">Ставка: 1р</p>
-                </div>
+                <button class="btn btn-bet" data-bet="1">+1р</button>
+                <button class="btn btn-bet" data-bet="5">+5р</button>
+                <button class="btn btn-bet" data-bet="10">+10р</button>
             </div>
             
-            <div class="increase-bet">
-                <input type="number" id="bet-input" class="bet-input" value="1" min="1">
-                <button id="increase-bet-btn" class="btn">Увеличить ставку</button>
-            </div>
-            
-            <div class="slot-machine" id="slot-machine">
-                <div class="slot-digit">0</div>
+            <div class="slot-machine" id="slot-machine" style="display: none;">
+                <div class="slot-content" id="slot-content">
+                    <div class="slot-avatar">
+                        <img src="https://i.imgur.com/JqYeYnR.png" class="avatar" style="width: 120px; height: 120px;">
+                    </div>
+                    <div class="slot-avatar">
+                        <img src="https://i.imgur.com/3QZxJ9u.png" class="avatar" style="width: 120px; height: 120px;">
+                    </div>
+                </div>
             </div>
             
             <div class="result" id="result"></div>
@@ -205,14 +290,16 @@
         const ROOM_ID = "classic_room";
         let currentUserId = localStorage.getItem('user_id') || 'user_' + Math.random().toString(36).substr(2, 8);
         localStorage.setItem('user_id', currentUserId);
+        let currentBalance = parseInt(localStorage.getItem('balance')) || 1000;
         let isInRoom = false;
         let isCreator = false;
         let gameInterval = null;
         let timeLeft = 30;
         let yourBet = 1;
         let opponentBet = 1;
-        let gameState = 'waiting'; // waiting, betting, spinning, finished
+        let gameState = 'waiting';
         let roomRef = null;
+        let spinInterval = null;
 
         // DOM элементы
         const mainMenu = document.getElementById('main-menu');
@@ -223,16 +310,25 @@
         const playersCount = document.getElementById('players-count');
         const roomStatus = document.getElementById('room-status');
         const timerElement = document.getElementById('timer');
+        const timerProgress = document.querySelector('.timer-progress');
         const yourBetElement = document.getElementById('your-bet');
         const opponentBetElement = document.getElementById('opponent-bet');
-        const betInput = document.getElementById('bet-input');
-        const increaseBetBtn = document.getElementById('increase-bet-btn');
+        const betButtons = document.querySelectorAll('.btn-bet');
         const slotMachine = document.getElementById('slot-machine');
+        const slotContent = document.getElementById('slot-content');
         const resultElement = document.getElementById('result');
+        const balanceElement = document.getElementById('balance');
+
+        // Обновление баланса
+        function updateBalance() {
+            balanceElement.textContent = currentBalance + "р";
+            localStorage.setItem('balance', currentBalance.toString());
+        }
 
         // Инициализация комнаты
         function initRoom() {
             roomRef = database.ref('rooms/' + ROOM_ID);
+            updateBalance();
             
             // Слушаем изменения в комнате
             roomRef.on('value', (snapshot) => {
@@ -270,7 +366,7 @@
             playersCount.textContent = `${playersCountValue}/2`;
             
             // Блокируем комнату, если игра уже идет
-            if (room.status !== 'waiting' && room.status !== 'waiting') {
+            if (room.status !== 'waiting') {
                 roomCard.classList.add('disabled');
                 joinRoomBtn.classList.add('btn-disabled');
                 joinRoomBtn.disabled = true;
@@ -283,13 +379,16 @@
             }
             
             // Показываем кнопку выхода, если мы в комнате
-            if (isInRoom) {
+            const isPlayerInRoom = players.includes(currentUserId);
+            if (isPlayerInRoom) {
+                isInRoom = true;
                 joinRoomBtn.style.display = 'none';
                 leaveRoomBtn.style.display = 'inline-block';
                 
                 // Отключаем кнопку выхода, если уже 2 игрока
                 leaveRoomBtn.disabled = playersCountValue === 2;
             } else {
+                isInRoom = false;
                 joinRoomBtn.style.display = 'inline-block';
                 leaveRoomBtn.style.display = 'none';
             }
@@ -315,12 +414,14 @@
             }
             
             // Обновляем ставки
-            if (isCreator || room.player2 === currentUserId) {
-                yourBet = room.player2Bet || 1;
-                opponentBet = room.player1Bet || 1;
-            } else {
+            if (room.player1 === currentUserId) {
                 yourBet = room.player1Bet || 1;
                 opponentBet = room.player2Bet || 1;
+                isCreator = true;
+            } else if (room.player2 === currentUserId) {
+                yourBet = room.player2Bet || 1;
+                opponentBet = room.player1Bet || 1;
+                isCreator = false;
             }
             
             updateBetDisplay();
@@ -328,6 +429,11 @@
 
         // Вход в комнату
         joinRoomBtn.addEventListener('click', () => {
+            if (currentBalance < 1) {
+                alert("Недостаточно средств!");
+                return;
+            }
+            
             roomRef.transaction((room) => {
                 if (!room) {
                     room = {
@@ -340,7 +446,7 @@
                     };
                 }
                 
-                if (room.status !== 'waiting' && room.status !== 'waiting') return; // Не входим, если игра идет
+                if (room.status !== 'waiting') return; // Не входим, если игра идет
                 
                 if (!room.player1) {
                     room.player1 = currentUserId;
@@ -354,7 +460,15 @@
                     return; // Уже в комнате или комната полная
                 }
                 
+                // Если теперь 2 игрока, начинаем игру
+                const playersCount = (room.player1 ? 1 : 0) + (room.player2 ? 1 : 0);
+                if (playersCount === 2) {
+                    room.status = 'betting';
+                }
+                
                 isInRoom = true;
+                currentBalance -= 1; // Списываем 1р за вход
+                updateBalance();
                 return room;
             });
         });
@@ -364,9 +478,12 @@
             roomRef.transaction((room) => {
                 if (!room) return;
                 
+                let shouldRefund = false;
+                
                 if (room.player1 === currentUserId) {
                     room.player1 = null;
                     room.player1Bet = 1;
+                    shouldRefund = true;
                     
                     // Если был второй игрок, он становится первым
                     if (room.player2) {
@@ -378,6 +495,12 @@
                 } else if (room.player2 === currentUserId) {
                     room.player2 = null;
                     room.player2Bet = 1;
+                    shouldRefund = true;
+                }
+                
+                if (shouldRefund) {
+                    currentBalance += 1; // Возвращаем 1р
+                    updateBalance();
                 }
                 
                 isInRoom = false;
@@ -386,28 +509,41 @@
         });
 
         // Увеличение ставки
-        increaseBetBtn.addEventListener('click', () => {
-            const newBet = parseInt(betInput.value);
-            if (newBet >= 1 && gameState === 'betting') {
-                yourBet = newBet;
+        betButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (gameState !== 'betting') return;
+                
+                const betAmount = parseInt(btn.dataset.bet);
+                if (currentBalance < betAmount) {
+                    alert("Недостаточно средств!");
+                    return;
+                }
                 
                 // Обновляем ставку в базе данных
                 if (isCreator) {
                     roomRef.update({
-                        player1Bet: yourBet
+                        player1Bet: yourBet + betAmount
                     });
                 } else {
                     roomRef.update({
-                        player2Bet: yourBet
+                        player2Bet: yourBet + betAmount
                     });
                 }
-            }
+                
+                currentBalance -= betAmount;
+                updateBalance();
+                
+                // Подсветка кнопки
+                betButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                setTimeout(() => btn.classList.remove('active'), 300);
+            });
         });
 
         // Обновление отображения ставок
         function updateBetDisplay() {
-            yourBetElement.textContent = `Ставка: ${yourBet}р`;
-            opponentBetElement.textContent = `Ставка: ${opponentBet}р`;
+            document.querySelector('#your-bet .bet-amount').textContent = yourBet + "р";
+            document.querySelector('#opponent-bet .bet-amount').textContent = opponentBet + "р";
         }
 
         // Запуск таймера игры
@@ -415,10 +551,15 @@
             clearInterval(gameInterval);
             timeLeft = 30;
             timerElement.textContent = timeLeft;
+            timerProgress.setAttribute('stroke-dashoffset', 0);
             
             gameInterval = setInterval(() => {
                 timeLeft--;
                 timerElement.textContent = timeLeft;
+                
+                // Обновляем круг таймера
+                const progress = (30 - timeLeft) / 30 * 100;
+                timerProgress.setAttribute('stroke-dashoffset', 100 - progress);
                 
                 if (timeLeft <= 0) {
                     clearInterval(gameInterval);
@@ -432,15 +573,15 @@
 
         // Запуск вращения слота
         function startSpinning() {
-            clearInterval(gameInterval);
-            timerElement.textContent = "Крутим...";
+            slotMachine.style.display = 'block';
+            clearInterval(spinInterval);
             
-            // Анимация вращения
-            const spinDuration = 8000 + Math.random() * 4000; // 8-12 секунд
+            const spinDuration = 3000 + Math.random() * 5000; // 3-8 секунд
             const startTime = Date.now();
             const endTime = startTime + spinDuration;
+            let lastShift = 0;
             
-            const spinInterval = setInterval(() => {
+            spinInterval = setInterval(() => {
                 const currentTime = Date.now();
                 const progress = (currentTime - startTime) / spinDuration;
                 
@@ -448,11 +589,16 @@
                     clearInterval(spinInterval);
                     finishSpinning();
                 } else {
-                    // Показываем случайное число
-                    const randomNum = Math.floor(Math.random() * 100);
-                    slotMachine.innerHTML = `<div class="slot-digit">${randomNum}</div>`;
+                    // Плавное замедление вращения
+                    const speed = Math.max(0.1, 1 - progress * 0.9);
+                    
+                    if (currentTime - lastShift > 100 * speed) {
+                        const shift = Math.random() > 0.5 ? 0 : 50;
+                        slotContent.style.transform = `translateX(-${shift}%)`;
+                        lastShift = currentTime;
+                    }
                 }
-            }, 100);
+            }, 16);
         }
 
         // Завершение вращения и определение победителя
@@ -462,13 +608,13 @@
             const yourChance = yourBet / totalBet;
             const isWinner = Math.random() < yourChance;
             
-            const winnerId = isWinner ? currentUserId : 
-                            (isCreator ? roomRef.player2 : roomRef.player1);
+            // Останавливаем на выбранном аватаре
+            slotContent.style.transform = `translateX(-${isWinner ? 0 : 50}%)`;
             
             // Обновляем статус комнаты
             roomRef.update({
                 status: 'finished',
-                winner: winnerId,
+                winner: isWinner ? currentUserId : (isCreator ? roomRef.player2 : roomRef.player1),
                 prize: totalBet
             });
         }
@@ -476,18 +622,21 @@
         // Показ результата
         function showResult(winnerId) {
             const isWinner = winnerId === currentUserId;
+            const winAmount = yourBet + opponentBet;
             
             if (isWinner) {
-                resultElement.textContent = `Вы выиграли ${yourBet + opponentBet}р!`;
-                resultElement.style.color = '#4CAF50';
+                resultElement.textContent = `Ты выиграл ${winAmount}р!`;
+                resultElement.className = 'result win';
+                currentBalance += winAmount;
             } else {
-                resultElement.textContent = `Вы проиграли ${yourBet}р.`;
-                resultElement.style.color = '#f44336';
+                resultElement.textContent = `Ты проиграл ${yourBet}р`;
+                resultElement.className = 'result lose';
             }
             
+            updateBalance();
             resultElement.style.display = 'block';
             
-            // Через 10 секунд сбрасываем комнату
+            // Через 5 секунд сбрасываем комнату
             setTimeout(() => {
                 roomRef.update({
                     player1: null,
@@ -502,13 +651,15 @@
                 gameContainer.style.display = 'none';
                 mainMenu.style.display = 'block';
                 resultElement.style.display = 'none';
+                slotMachine.style.display = 'none';
                 isInRoom = false;
-            }, 10000);
+                gameState = 'waiting';
+            }, 5000);
         }
 
         // Очистка при выходе
         window.addEventListener('beforeunload', () => {
-            if (isInRoom) {
+            if (isInRoom && gameState !== 'finished') {
                 roomRef.transaction((room) => {
                     if (!room) return;
                     
@@ -525,6 +676,10 @@
                     } else if (room.player2 === currentUserId) {
                         room.player2 = null;
                         room.player2Bet = 1;
+                    }
+                    
+                    if (!room.player1 && !room.player2) {
+                        room.status = 'waiting';
                     }
                     
                     return room;
