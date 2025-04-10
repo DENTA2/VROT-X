@@ -352,7 +352,7 @@
 
     <div class="profile-content">
         <div class="avatar-container">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyLDJBMTAsMTAgMCAwLDAgMiwxMkExMCwxMCAwIDAsMCAxMiwyMkExMCwxMCAwIDAsMCAyMiwxMkExMCwxMCAwIDAsMCAxMiwyTTEyLDRBNyw3IDAgMCwxIDE5LDExQTcsNyAwIDAsMSAxMiwxOEE3LDcgMCAwLDEgNSwxMUE3LDcgMCAwLDEgMTIsNE0xMiw2QTUsNSAwIDAsMCA3LDExQTUsNSAwIDAsMCAxMiwxNkE1LDUgMCAwLDAgMTcsMTFBNSw1IDAgMCwwIDEyLDZNMTIsOEEzLDMgMCAwLDEgMTUsMTFBNCw0IDAgMCwxIDEyLDE1QTQsNCAwIDAsMSA5LDExQTMsMyAwIDAsMSAxMiw4WiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=" 
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyLDJBMTAsMTAgMCAwLDAgMiwxMkExMCwxMCAwIDAsMCAxMiwyMkExMCwxMCAwIDAsMCAyMiwxMkExMCwxMCAwIDAsMCAxMiwyTTEyLDRBNywyIDAgMCwxIDE5LDExQTcsNyAwIDAsMSAxMiwxOEE3LDcgMCAwLDEgNSwxMUE3LDcgMCAwLDEgMTIsNE0xMiw2QTUsNSAwIDAsMCA3LDExQTUsNSAwIDAsMCAxMiwxNkE1LDUgMCAwLDAgMTcsMTFBNSw1IDAgMCwwIDEyLDZNMTIsOEEzLDMgMCAwLDEgMTUsMTFBNCw0IDAgMCwxIDEyLDE1QTQsNCAwIDAsMSA5LDExQTMsMyAwIDAsMSAxMiw4WiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=" 
                  class="avatar-img" 
                  alt="Аватар" />
         </div>
@@ -476,14 +476,32 @@
             // Берем последние 10 операций и переворачиваем порядок (новые сверху)
             const last10 = history.slice(-10).reverse();
             
-            historyBody.innerHTML = last10.map(op => `
-                <tr>
-                    <td class="history-type">${op.type === 'promo' ? 'Промокод' : 'Система'}</td>
-                    <td class="history-amount ${op.amount >= 0 ? 'positive' : 'negative'}">
-                        ${op.amount >= 0 ? '+' : ''}${op.amount.toFixed(2)} ₽
-                    </td>
-                </tr>
-            `).join('');
+            historyBody.innerHTML = last10.map(op => {
+                // Форматируем дату в нужный формат (дд.мм чч:мм)
+                const date = new Date(op.date);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const formattedDate = `${day}.${month} ${hours}:${minutes}`;
+
+                // Определяем тип операции для отображения
+                let operationType = op.type === 'promo' ? 'Промокод' : 'Система';
+                
+                // Если это промокод, добавляем дату к типу
+                if (op.type === 'promo') {
+                    operationType = `Промокод (${formattedDate})`;
+                }
+
+                return `
+                    <tr>
+                        <td class="history-type">${operationType}</td>
+                        <td class="history-amount ${op.amount >= 0 ? 'positive' : 'negative'}">
+                            ${op.amount >= 0 ? '+' : ''}${op.amount.toFixed(2)} ₽
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         // Добавление системной операции
@@ -494,6 +512,13 @@
             try {
                 const userSnapshot = await database.ref('users/' + userId).once('value');
                 const userData = userSnapshot.val();
+                
+                // Проверяем, была ли последняя операция промокодом
+                const lastOperation = userData?.history?.slice(-1)[0];
+                if (lastOperation && lastOperation.type === 'promo') {
+                    return; // Не добавляем системную операцию после промокода
+                }
+                
                 const history = userData?.history || [];
                 
                 await database.ref('users/' + userId).update({
