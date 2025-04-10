@@ -202,7 +202,8 @@
         const database = firebase.database();
 
         // Глобальные переменные
-        let currentUserId = generateUserId();
+        let currentUserId = localStorage.getItem('user_id') || 'user_' + Math.random().toString(36).substr(2, 8);
+        localStorage.setItem('user_id', currentUserId);
         let currentRoomId = null;
         let isCreator = false;
         let gameInterval = null;
@@ -230,11 +231,6 @@
         const slotMachine = document.getElementById('slot-machine');
         const resultElement = document.getElementById('result');
 
-        // Генерация случайного ID пользователя
-        function generateUserId() {
-            return 'user_' + Math.random().toString(36).substr(2, 9);
-        }
-
         // Создание комнаты
         createRoomBtn.addEventListener('click', () => {
             isCreator = true;
@@ -243,6 +239,7 @@
             // Создаем комнату в базе данных
             database.ref('rooms/' + currentRoomId).set({
                 creator: currentUserId,
+                creatorName: "Игрок " + currentUserId.substr(5, 4),
                 player1: currentUserId,
                 player1Bet: 1,
                 player2: null,
@@ -258,6 +255,9 @@
             mainMenu.style.display = 'none';
             waitingRoom.style.display = 'block';
             roomIdDisplay.textContent = `ID комнаты: ${currentRoomId}`;
+            
+            // Обновляем список комнат для других игроков
+            updateRoomListForOthers();
         });
 
         // Присоединение к списку комнат
@@ -309,6 +309,11 @@
             }
         });
 
+        // Обновление списка комнат для других игроков
+        function updateRoomListForOthers() {
+            database.ref('rooms/' + currentRoomId).onDisconnect().remove();
+        }
+
         // Загрузка списка комнат
         function loadRoomList() {
             roomList.innerHTML = '';
@@ -324,13 +329,13 @@
                 roomList.innerHTML = '';
                 
                 for (const roomId in rooms) {
-                    if (rooms[roomId].player2 === null) {
+                    if (rooms[roomId].player2 === null && roomId !== currentUserId) {
                         const roomCard = document.createElement('div');
                         roomCard.className = 'room-card';
                         roomCard.innerHTML = `
                             <div>
-                                <strong>Комната: ${roomId}</strong>
-                                <p>Статус: Ожидание</p>
+                                <strong>${rooms[roomId].creatorName || 'Игрок ' + roomId.substr(5, 4)}</strong>
+                                <p>ID: ${roomId}</p>
                             </div>
                             <button class="btn join-room" data-room="${roomId}">Присоединиться</button>
                         `;
