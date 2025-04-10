@@ -123,6 +123,22 @@
             font-size: 20px;
             z-index: 1000;
         }
+        /* Стили для заблокированных игр */
+        .locked-game {
+            background-color: #e0e0e0;
+            color: #999;
+            position: relative;
+        }
+        .locked-game::after {
+            content: '🔒';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+        }
+        .locked-game .game-icon {
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -140,21 +156,36 @@
             <div class="title-gradient-line"></div>
         </div>
         <div class="games-grid">
+            <!-- Доступные игры -->
             <div class="game-card" onclick="openGame('miner')">
                 <div class="game-icon">💣</div>
                 <div class="game-name">Минер</div>
-            </div>
-            <div class="game-card" onclick="openGame('dice')">
-                <div class="game-icon">🎲</div>
-                <div class="game-name">Кости</div>
             </div>
             <div class="game-card" onclick="goToSlots()">
                 <div class="game-icon">🎰</div>
                 <div class="game-name">Слоты</div>
             </div>
-            <div class="game-card" onclick="openGame('wheel')">
+            <div class="game-card" onclick="goToClassic()">
+                <div class="game-icon">🃏</div>
+                <div class="game-name">Классик</div>
+            </div>
+            
+            <!-- Заблокированные игры -->
+            <div class="game-card locked-game" onclick="showLockedMessage()">
+                <div class="game-icon">🎲</div>
+                <div class="game-name">Кости</div>
+            </div>
+            <div class="game-card locked-game" onclick="showLockedMessage()">
                 <div class="game-icon">🎡</div>
-                <div class="game-name">Колесо</div>
+                <div class="game-name">Рулетка</div>
+            </div>
+            <div class="game-card locked-game" onclick="showLockedMessage()">
+                <div class="game-icon">📉</div>
+                <div class="game-name">Краш</div>
+            </div>
+            <div class="game-card locked-game" onclick="showLockedMessage()">
+                <div class="game-icon">🎯</div>
+                <div class="game-name">Плинко</div>
             </div>
         </div>
     </div>
@@ -240,12 +271,6 @@
                 case 'miner':
                     window.location.href = "miner.html";
                     break;
-                case 'dice':
-                    alert('Игра "Кости" в разработке');
-                    break;
-                case 'wheel':
-                    alert('Игра "Колесо" в разработке');
-                    break;
                 default:
                     console.error('Unknown game:', game);
             }
@@ -259,6 +284,16 @@
         // Переход на страницу слотов
         function goToSlots() {
             window.location.href = "slots.html";
+        }
+
+        // Переход на классические игры
+        function goToClassic() {
+            window.location.href = "classik.html";
+        }
+
+        // Сообщение о заблокированной игре
+        function showLockedMessage() {
+            alert('Эта игра пока недоступна. Следите за обновлениями!');
         }
 
         // Инициализация при загрузке страницы
