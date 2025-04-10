@@ -582,8 +582,7 @@
         <div class="loading-spinner"></div>
         <div>Загрузка...</div>
     </div>
-
-    <script>
+<script>
         // Конфигурация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCMos6Y7C-krTLuKCI4VJG-TFLo6QI--k8",
@@ -619,6 +618,9 @@
         let isFirebaseConnected = false;
         let reelAnimations = [null, null, null];
         let stopTimeouts = [null, null, null];
+        let reelPositions = [0, 0, 0];
+        let reelSpeeds = [0, 0, 0];
+        let lastFrameTime = 0;
         
         // Элементы DOM
         const balanceElement = document.getElementById('balance');
@@ -666,6 +668,7 @@
                 }
                 
                 // Устанавливаем начальную позицию
+                reelPositions[i] = 0;
                 reelElements[i].style.transform = 'translateY(0)';
             }
         }
@@ -758,6 +761,31 @@
             return symbols[0];
         }
         
+        // Анимация барабанов
+        function animateReels(timestamp) {
+            if (!lastFrameTime) lastFrameTime = timestamp;
+            const deltaTime = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+            
+            for (let i = 0; i < 3; i++) {
+                if (reelSpeeds[i] > 0) {
+                    reelPositions[i] += reelSpeeds[i] * deltaTime / 1000;
+                    
+                    // Если барабан достиг нижнего предела, перемещаем его вверх
+                    if (reelPositions[i] >= reelElements[i].children.length * 40) {
+                        reelPositions[i] = 0;
+                    }
+                    
+                    reelElements[i].style.transform = `translateY(-${reelPositions[i]}px)`;
+                }
+            }
+            
+            // Продолжаем анимацию, если хотя бы один барабан еще вращается
+            if (reelSpeeds.some(speed => speed > 0)) {
+                requestAnimationFrame(animateReels);
+            }
+        }
+        
         // Вращение слотов
         function spin() {
             if (isSpinning || balance < currentBet) return;
@@ -779,35 +807,11 @@
         
         // Запуск всех барабанов
         function startAllReels() {
+            lastFrameTime = 0;
             for (let i = 0; i < 3; i++) {
-                startReel(i);
+                reelSpeeds[i] = 200 + Math.random() * 100; // Скорость в пикселях в секунду
             }
-        }
-        
-        // Запуск одного барабана
-        function startReel(index) {
-            // Останавливаем предыдущую анимацию
-            if (reelAnimations[index]) {
-                cancelAnimationFrame(reelAnimations[index]);
-            }
-            
-            const reel = reelElements[index];
-            let position = 0;
-            const speed = 30; // пикселей в секунду
-            let lastTime = performance.now();
-            
-            function animate(currentTime) {
-                const deltaTime = currentTime - lastTime;
-                lastTime = currentTime;
-                
-                position += (speed * deltaTime) / 1000;
-                if (position > 40) position = 0;
-                
-                reel.style.transform = `translateY(-${position}px)`;
-                reelAnimations[index] = requestAnimationFrame(animate);
-            }
-            
-            reelAnimations[index] = requestAnimationFrame(animate);
+            requestAnimationFrame(animateReels);
         }
         
         // Последовательная остановка барабанов
@@ -837,29 +841,47 @@
         
         // Остановка барабана
         function stopReel(index) {
-            // Останавливаем анимацию
-            if (reelAnimations[index]) {
-                cancelAnimationFrame(reelAnimations[index]);
-                reelAnimations[index] = null;
+            // Замедляем барабан
+            const targetPosition = Math.floor(Math.random() * reelElements[index].children.length) * 40;
+            const distance = targetPosition - (reelPositions[index] % (reelElements[index].children.length * 40));
+            
+            // Плавное замедление
+            reelSpeeds[index] = 0;
+            
+            // Анимация плавной остановки
+            const duration = 500; // 0.5 секунды на остановку
+            const startPosition = reelPositions[index];
+            const startTime = performance.now();
+            
+            function stopAnimation(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = easeOutCubic(progress);
+                
+                reelPositions[index] = startPosition + distance * easeProgress;
+                reelElements[index].style.transform = `translateY(-${reelPositions[index]}px)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(stopAnimation);
+                } else {
+                    // Корректируем позицию точно на символ
+                    reelPositions[index] = targetPosition;
+                    reelElements[index].style.transform = `translateY(-${reelPositions[index]}px)`;
+                    
+                    // Эффект при остановке
+                    slotElements[index].classList.add('slot-win');
+                    setTimeout(() => {
+                        slotElements[index].classList.remove('slot-win');
+                    }, 500);
+                }
             }
             
-            const reel = reelElements[index];
-            const items = reel.children;
-            const itemHeight = 40; // высота одного символа
-            
-            // Выбираем случайный символ для остановки
-            const stopIndex = Math.floor(Math.random() * items.length);
-            const stopPosition = stopIndex * itemHeight;
-            
-            // Плавная остановка
-            reel.style.transition = 'transform 0.5s ease-out';
-            reel.style.transform = `translateY(-${stopPosition}px)`;
-            
-            // Эффект при остановке
-            slotElements[index].classList.add('slot-win');
-            setTimeout(() => {
-                slotElements[index].classList.remove('slot-win');
-            }, 500);
+            requestAnimationFrame(stopAnimation);
+        }
+        
+        // Функция плавного замедления
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
         }
         
         // Проверка выигрышной комбинации
@@ -868,11 +890,9 @@
             
             // Получаем центральные символы каждого барабана
             for (let i = 0; i < 3; i++) {
-                const reel = reelElements[i];
-                const transformY = parseInt(reel.style.transform.split('(')[1]);
-                const itemHeight = 40;
-                const centerIndex = Math.round(transformY / itemHeight);
-                const item = reel.children[centerIndex % reel.children.length];
+                const position = reelPositions[i];
+                const itemIndex = Math.floor(position / 40) % reelElements[i].children.length;
+                const item = reelElements[i].children[itemIndex];
                 results.push(item.textContent || item.querySelector('div').textContent);
             }
             
