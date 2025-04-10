@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Слот-автомат</title>
+    <title>SLOTS</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -17,15 +17,15 @@
         body {
             background: #0a0a12;
             color: white;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
-            overflow-x: hidden;
         }
         
         .header {
             background: rgba(0, 0, 0, 0.7);
-            padding: 15px 20px;
+            padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -38,11 +38,11 @@
             background: rgba(255, 215, 0, 0.1);
             border: 1px solid rgba(255, 215, 0, 0.3);
             color: #ffd700;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            padding: 8px 15px;
+            padding: 6px 12px;
             border-radius: 20px;
             transition: all 0.3s;
         }
@@ -53,33 +53,44 @@
         
         .back-button::before {
             content: "←";
-            margin-right: 8px;
+            margin-right: 5px;
         }
         
         .title {
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             color: #ffd700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+            letter-spacing: 2px;
         }
         
         .balance-container {
             background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 215, 0, 0.3);
-            padding: 8px 15px;
+            padding: 6px 12px;
             border-radius: 20px;
-            font-size: 16px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             color: #ffd700;
         }
         
-        .balance-icon {
-            margin-right: 8px;
-            font-size: 18px;
+        .help-button {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #ffd700;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 10px;
+            font-weight: bold;
         }
         
         .slot-machine {
@@ -88,121 +99,104 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 15px;
             position: relative;
+            overflow: hidden;
         }
         
         .machine-body {
             background: #1a1a2a;
-            border-radius: 15px;
-            padding: 30px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 
-                0 0 30px rgba(0, 0, 0, 0.8),
-                inset 0 0 20px rgba(0, 0, 0, 0.5);
-            border: 5px solid #2a2a3a;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .machine-body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 40%;
-            background: linear-gradient(to bottom, 
-                rgba(255, 215, 0, 0.1), 
-                transparent);
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .machine-screen {
-            background: #0e0e1a;
             border-radius: 10px;
             padding: 20px;
-            margin-bottom: 20px;
+            width: 100%;
+            max-width: 400px;
             box-shadow: 
-                inset 0 0 30px rgba(0, 0, 0, 0.8),
-                0 5px 20px rgba(0, 0, 0, 0.6);
-            border: 2px solid #2a2a3a;
+                0 0 20px rgba(0, 0, 0, 0.8),
+                inset 0 0 15px rgba(0, 0, 0, 0.5);
+            border: 3px solid #2a2a3a;
             position: relative;
-            overflow: hidden;
+        }
+        
+        .message-display {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 5px;
+            padding: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffd700;
+            font-size: 16px;
         }
         
         .slots-container {
             position: relative;
-            height: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 120px;
+            margin-bottom: 15px;
         }
         
         .slots {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            height: 150px;
+            gap: 10px;
+            height: 100%;
             position: relative;
-            z-index: 2;
         }
         
         .slot {
-            width: 100px;
-            height: 150px;
+            width: 80px;
+            height: 100%;
             background: #151525;
-            border-radius: 8px;
+            border-radius: 5px;
             overflow: hidden;
             position: relative;
             box-shadow: 
-                inset 0 0 20px rgba(0, 0, 0, 0.8),
-                0 5px 10px rgba(0, 0, 0, 0.4);
-            border: 2px solid #2a2a4a;
+                inset 0 0 15px rgba(0, 0, 0, 0.8),
+                0 3px 8px rgba(0, 0, 0, 0.4);
+            border: 1px solid #2a2a4a;
+        }
+        
+        .slot-window {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
         }
         
         .slot-reel {
             position: absolute;
             width: 100%;
-            height: 500%;
-            top: 0;
-            left: 0;
-            transition: top 8s cubic-bezier(0.1, 0.8, 0.2, 1);
+            transition: transform 0.1s linear;
         }
         
         .slot-item {
             width: 100%;
-            height: 20%;
+            height: 40px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 50px;
+            font-size: 30px;
             color: white;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
         
         .slot-item.seven {
             background: linear-gradient(135deg, #ff5e62, #ff9966);
             border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            margin: 0 auto;
+            width: 36px;
+            height: 36px;
             display: flex;
             justify-content: center;
             align-items: center;
             color: white;
             font-weight: bold;
             box-shadow: 
-                0 0 20px rgba(255, 94, 98, 0.7),
-                inset 0 0 10px rgba(255, 255, 255, 0.3);
-            animation: sevenGlow 2s infinite alternate;
-        }
-        
-        @keyframes sevenGlow {
-            0% { box-shadow: 0 0 20px rgba(255, 94, 98, 0.7); }
-            100% { box-shadow: 0 0 30px rgba(255, 94, 98, 0.9), 0 0 40px rgba(255, 94, 98, 0.5); }
+                0 0 10px rgba(255, 94, 98, 0.7),
+                inset 0 0 5px rgba(255, 255, 255, 0.3);
         }
         
         .slot-mask {
@@ -219,7 +213,6 @@
                 rgba(0, 0, 0, 0.8) 100%
             );
             pointer-events: none;
-            z-index: 3;
         }
         
         .slot-highlight {
@@ -227,13 +220,12 @@
             top: 50%;
             left: 0;
             right: 0;
-            height: 30%;
+            height: 40px;
             transform: translateY(-50%);
             background: rgba(255, 215, 0, 0.1);
             border-top: 1px solid rgba(255, 215, 0, 0.3);
             border-bottom: 1px solid rgba(255, 215, 0, 0.3);
             pointer-events: none;
-            z-index: 2;
         }
         
         .controls {
@@ -241,28 +233,27 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            margin-top: 20px;
         }
         
         .bet-controls {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 15px;
             width: 100%;
         }
         
         .bet-btn {
-            padding: 10px 15px;
+            padding: 8px 12px;
             background: #252535;
             color: #ffd700;
             border: none;
-            border-radius: 20px;
-            font-size: 16px;
+            border-radius: 15px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.3s;
-            min-width: 70px;
+            min-width: 60px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 215, 0, 0.2);
         }
@@ -274,60 +265,34 @@
         .bet-btn.active {
             background: linear-gradient(135deg, #ff9a00, #ff5e00);
             color: white;
-            box-shadow: 0 0 15px rgba(255, 94, 0, 0.5);
+            box-shadow: 0 0 10px rgba(255, 94, 0, 0.5);
             border: 1px solid rgba(255, 215, 0, 0.5);
         }
         
         .spin-btn {
-            padding: 15px 40px;
+            padding: 12px 30px;
             background: linear-gradient(135deg, #ff9a00, #ff5e00);
             color: white;
             border: none;
-            border-radius: 30px;
-            font-size: 18px;
+            border-radius: 25px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
             width: 100%;
-            max-width: 250px;
-            margin-top: 10px;
+            max-width: 200px;
+            margin-top: 5px;
             box-shadow: 
-                0 5px 15px rgba(255, 94, 0, 0.4),
-                inset 0 -3px 5px rgba(0, 0, 0, 0.2);
-            text-transform: uppercase;
+                0 3px 10px rgba(255, 94, 0, 0.4),
+                inset 0 -2px 3px rgba(0, 0, 0, 0.2);
             letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-        }
-        
-        .spin-btn::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: linear-gradient(
-                to bottom right,
-                rgba(255, 255, 255, 0) 45%,
-                rgba(255, 255, 255, 0.2) 50%,
-                rgba(255, 255, 255, 0) 55%
-            );
-            transform: rotate(30deg);
-            transition: all 0.5s;
-            z-index: -1;
         }
         
         .spin-btn:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: 
-                0 8px 20px rgba(255, 94, 0, 0.6),
-                inset 0 -3px 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        .spin-btn:hover::before {
-            left: 100%;
+                0 5px 15px rgba(255, 94, 0, 0.6),
+                inset 0 -2px 3px rgba(0, 0, 0, 0.2);
         }
         
         .spin-btn:active {
@@ -342,48 +307,96 @@
             color: #777;
         }
         
-        .spin-btn:disabled::before {
-            display: none;
-        }
-        
-        .result-message {
-            margin-top: 20px;
-            font-size: 22px;
-            font-weight: bold;
-            text-align: center;
-            min-height: 30px;
-            color: #ffd700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            background: rgba(0, 0, 0, 0.3);
-            width: 100%;
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.5s;
-        }
-        
-        .result-message.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
         .win-animation {
             animation: winPulse 0.5s ease-in-out;
         }
         
         @keyframes winPulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.05); }
         }
         
         .slot-win {
-            animation: slotWin 0.5s ease-in-out 3;
+            animation: slotWin 0.5s ease-in-out;
         }
         
         @keyframes slotWin {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 10px gold; }
-            50% { transform: scale(1.1); box-shadow: 0 0 20px gold; }
+            0%, 100% { box-shadow: 0 0 5px gold; }
+            50% { box-shadow: 0 0 15px gold; }
+        }
+        
+        /* Модальное окно помощи */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: #1a1a2a;
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ffd700;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .modal-title {
+            color: #ffd700;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        .combinations-list {
+            list-style-type: none;
+        }
+        
+        .combination-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+        }
+        
+        .combination-symbols {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .combination-payout {
+            color: #ffd700;
+            font-weight: bold;
         }
         
         .loading {
@@ -397,101 +410,171 @@
             justify-content: center;
             align-items: center;
             color: #ffd700;
-            font-size: 20px;
+            font-size: 18px;
             z-index: 1000;
             flex-direction: column;
         }
         
         .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255, 215, 0, 0.2);
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 215, 0, 0.2);
             border-radius: 50%;
             border-top-color: #ff9a00;
             animation: spin 1s ease-in-out infinite;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 500px) {
-            .slot {
-                width: 80px;
-                height: 120px;
-            }
-            
-            .slot-item {
-                font-size: 40px;
-            }
-            
-            .slot-item.seven {
-                width: 60px;
-                height: 60px;
-            }
-            
-            .bet-btn {
-                padding: 8px 12px;
-                font-size: 14px;
-                min-width: 60px;
-            }
-            
-            .spin-btn {
-                padding: 12px 30px;
-                font-size: 16px;
-            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <button class="back-button" id="backButton">Назад</button>
-        <div class="title">Слот-автомат</div>
+        <div class="title">SLOTS</div>
         <div class="balance-container">
-            <span class="balance-icon">💰</span>
             <span id="balance">0.00</span> ₽
+            <button class="help-button" id="helpButton">?</button>
         </div>
     </div>
     
     <div class="slot-machine">
         <div class="machine-body">
-            <div class="machine-screen">
-                <div class="slots-container">
-                    <div class="slots">
-                        <div class="slot" id="slot1">
+            <div class="message-display" id="messageDisplay">Добро пожаловать!</div>
+            
+            <div class="slots-container">
+                <div class="slots">
+                    <div class="slot" id="slot1">
+                        <div class="slot-window">
                             <div class="slot-reel" id="reel1"></div>
-                            <div class="slot-highlight"></div>
-                            <div class="slot-mask"></div>
                         </div>
-                        <div class="slot" id="slot2">
+                        <div class="slot-highlight"></div>
+                        <div class="slot-mask"></div>
+                    </div>
+                    <div class="slot" id="slot2">
+                        <div class="slot-window">
                             <div class="slot-reel" id="reel2"></div>
-                            <div class="slot-highlight"></div>
-                            <div class="slot-mask"></div>
                         </div>
-                        <div class="slot" id="slot3">
+                        <div class="slot-highlight"></div>
+                        <div class="slot-mask"></div>
+                    </div>
+                    <div class="slot" id="slot3">
+                        <div class="slot-window">
                             <div class="slot-reel" id="reel3"></div>
-                            <div class="slot-highlight"></div>
-                            <div class="slot-mask"></div>
                         </div>
+                        <div class="slot-highlight"></div>
+                        <div class="slot-mask"></div>
                     </div>
                 </div>
-                
-                <div class="result-message" id="resultMessage"></div>
             </div>
             
             <div class="controls">
                 <div class="bet-controls">
                     <button class="bet-btn" data-bet="5">5 ₽</button>
                     <button class="bet-btn" data-bet="10">10 ₽</button>
-                    <button class="bet-btn" data-bet="25">25 ₽</button>
-                    <button class="bet-btn active" data-bet="50">50 ₽</button>
+                    <button class="bet-btn active" data-bet="25">25 ₽</button>
+                    <button class="bet-btn" data-bet="50">50 ₽</button>
                     <button class="bet-btn" data-bet="100">100 ₽</button>
-                    <button class="bet-btn" data-bet="1000">1000 ₽</button>
                 </div>
                 
                 <button class="spin-btn" id="spinBtn">Крутить</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно помощи -->
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <h3 class="modal-title">Выигрышные комбинации</h3>
+            <ul class="combinations-list">
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>💰</span><span>💰</span><span>💰</span>
+                    </div>
+                    <div class="combination-payout">×100</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>7</span><span>7</span><span>7</span>
+                    </div>
+                    <div class="combination-payout">×50</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍉</span><span>🍉</span><span>🍉</span>
+                    </div>
+                    <div class="combination-payout">×20</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍇</span><span>🍇</span><span>🍇</span>
+                    </div>
+                    <div class="combination-payout">×15</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍊</span><span>🍊</span><span>🍊</span>
+                    </div>
+                    <div class="combination-payout">×10</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍋</span><span>🍋</span><span>🍋</span>
+                    </div>
+                    <div class="combination-payout">×7</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍒</span><span>🍒</span><span>🍒</span>
+                    </div>
+                    <div class="combination-payout">×5</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>💰</span><span>💰</span>
+                    </div>
+                    <div class="combination-payout">×20</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>7</span><span>7</span>
+                    </div>
+                    <div class="combination-payout">×10</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍉</span><span>🍉</span>
+                    </div>
+                    <div class="combination-payout">×5</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍇</span><span>🍇</span>
+                    </div>
+                    <div class="combination-payout">×4</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍊</span><span>🍊</span>
+                    </div>
+                    <div class="combination-payout">×3</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍋</span><span>🍋</span>
+                    </div>
+                    <div class="combination-payout">×2</div>
+                </li>
+                <li class="combination-item">
+                    <div class="combination-symbols">
+                        <span>🍒</span><span>🍒</span>
+                    </div>
+                    <div class="combination-payout">×1.2</div>
+                </li>
+            </ul>
         </div>
     </div>
 
@@ -530,18 +613,19 @@
         // Глобальные переменные
         let userId = null;
         let userRef = null;
-        let currentBet = 50;
+        let currentBet = 25;
         let balance = 0;
         let isSpinning = false;
         let isFirebaseConnected = false;
-        let reels = [];
-        let stopOrder = [];
+        let reelAnimations = [null, null, null];
+        let stopTimeouts = [null, null, null];
         
         // Элементы DOM
         const balanceElement = document.getElementById('balance');
         const spinBtn = document.getElementById('spinBtn');
-        const resultMessage = document.getElementById('resultMessage');
+        const messageDisplay = document.getElementById('messageDisplay');
         const backButton = document.getElementById('backButton');
+        const helpButton = document.getElementById('helpButton');
         const betButtons = document.querySelectorAll('.bet-btn');
         const reelElements = [
             document.getElementById('reel1'),
@@ -554,22 +638,21 @@
             document.getElementById('slot3')
         ];
         const loadingElement = document.getElementById('loading');
+        const helpModal = document.getElementById('helpModal');
+        const modalClose = document.getElementById('modalClose');
         
         // Инициализация игры
         function initGame() {
             // Создаем символы на барабанах
-            reels = [[], [], []];
-            
             for (let i = 0; i < 3; i++) {
                 reelElements[i].innerHTML = '';
                 
-                // Добавляем 20 символов на каждый барабан (10 сверху, 10 снизу)
+                // Добавляем 20 символов на каждый барабан
                 for (let j = 0; j < 20; j++) {
-                    const symbolIndex = Math.floor(Math.random() * symbols.length);
-                    const symbol = symbols[symbolIndex];
-                    
+                    const symbol = getRandomSymbol();
                     const item = document.createElement('div');
                     item.className = 'slot-item';
+                    
                     if (symbol.special && symbol.icon === '7') {
                         const sevenElement = document.createElement('div');
                         sevenElement.className = 'slot-item seven';
@@ -580,11 +663,10 @@
                     }
                     
                     reelElements[i].appendChild(item);
-                    reels[i].push(symbol);
                 }
                 
-                // Устанавливаем начальную позицию (чтобы центральный символ был виден)
-                reelElements[i].style.top = '-400%';
+                // Устанавливаем начальную позицию
+                reelElements[i].style.transform = 'translateY(0)';
             }
         }
         
@@ -664,20 +746,29 @@
             });
         }
         
+        // Выбор случайного символа с учетом весов
+        function getRandomSymbol() {
+            let random = Math.random() * symbols.reduce((sum, s) => sum + s.weight, 0);
+            for (const symbol of symbols) {
+                if (random < symbol.weight) {
+                    return symbol;
+                }
+                random -= symbol.weight;
+            }
+            return symbols[0];
+        }
+        
         // Вращение слотов
         function spin() {
             if (isSpinning || balance < currentBet) return;
             
             isSpinning = true;
-            resultMessage.classList.remove('show');
+            messageDisplay.textContent = 'Крутим...';
             updateUI();
             
             // Вычитаем ставку
             balance = parseFloat((balance - currentBet).toFixed(2));
             saveBalance();
-            
-            // Генерируем последовательность остановки барабанов
-            stopOrder = [0, 1, 2];
             
             // Запускаем вращение всех барабанов
             startAllReels();
@@ -695,77 +786,80 @@
         
         // Запуск одного барабана
         function startReel(index) {
-            const reel = reelElements[index];
-            reel.style.transition = 'none';
-            reel.style.top = '-400%';
+            // Останавливаем предыдущую анимацию
+            if (reelAnimations[index]) {
+                cancelAnimationFrame(reelAnimations[index]);
+            }
             
-            // Небольшая задержка для плавного старта
-            setTimeout(() => {
-                reel.style.transition = 'top 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
-                reel.style.top = '0%';
-            }, 50);
+            const reel = reelElements[index];
+            let position = 0;
+            const speed = 30; // пикселей в секунду
+            let lastTime = performance.now();
+            
+            function animate(currentTime) {
+                const deltaTime = currentTime - lastTime;
+                lastTime = currentTime;
+                
+                position += (speed * deltaTime) / 1000;
+                if (position > 40) position = 0;
+                
+                reel.style.transform = `translateY(-${position}px)`;
+                reelAnimations[index] = requestAnimationFrame(animate);
+            }
+            
+            reelAnimations[index] = requestAnimationFrame(animate);
         }
         
         // Последовательная остановка барабанов
         function stopReelsSequentially() {
-            if (stopOrder.length === 0) {
-                // Все барабаны остановлены
-                checkWin();
-                isSpinning = false;
-                updateUI();
-                return;
-            }
-            
-            const reelIndex = stopOrder.shift();
-            const delay = reelIndex === 0 ? 1500 : reelIndex === 1 ? 2500 : 3500;
-            
-            setTimeout(() => {
-                stopReel(reelIndex);
-                stopReelsSequentially();
-            }, delay);
+            // Останавливаем первый барабан через 1 секунду
+            stopTimeouts[0] = setTimeout(() => {
+                stopReel(0);
+                
+                // Второй через 1.5 секунды после первого
+                stopTimeouts[1] = setTimeout(() => {
+                    stopReel(1);
+                    
+                    // Третий через 1.5 секунды после второго
+                    stopTimeouts[2] = setTimeout(() => {
+                        stopReel(2);
+                        
+                        // Проверяем выигрыш через 0.5 секунды после остановки последнего
+                        setTimeout(() => {
+                            checkWin();
+                            isSpinning = false;
+                            updateUI();
+                        }, 500);
+                    }, 1500);
+                }, 1500);
+            }, 1000);
         }
         
         // Остановка барабана
         function stopReel(index) {
-            const reel = reelElements[index];
-            const targetPosition = calculateStopPosition(index);
+            // Останавливаем анимацию
+            if (reelAnimations[index]) {
+                cancelAnimationFrame(reelAnimations[index]);
+                reelAnimations[index] = null;
+            }
             
-            reel.style.transition = 'top 1.5s cubic-bezier(0.2, 0.8, 0.4, 1)';
-            reel.style.top = targetPosition;
+            const reel = reelElements[index];
+            const items = reel.children;
+            const itemHeight = 40; // высота одного символа
+            
+            // Выбираем случайный символ для остановки
+            const stopIndex = Math.floor(Math.random() * items.length);
+            const stopPosition = stopIndex * itemHeight;
+            
+            // Плавная остановка
+            reel.style.transition = 'transform 0.5s ease-out';
+            reel.style.transform = `translateY(-${stopPosition}px)`;
             
             // Эффект при остановке
             slotElements[index].classList.add('slot-win');
             setTimeout(() => {
                 slotElements[index].classList.remove('slot-win');
-            }, 1500);
-        }
-        
-        // Расчет позиции остановки для выпадения случайного символа
-        function calculateStopPosition(index) {
-            // Выбираем случайный символ (с учетом весов)
-            const symbol = getRandomSymbol();
-            
-            // Находим позицию этого символа на барабане
-            const symbolIndex = reels[index].findIndex(s => s.icon === symbol.icon);
-            
-            // Рассчитываем позицию для остановки (чтобы символ оказался в центре)
-            const itemHeight = 20; // 20% высоты
-            const centerPosition = 40; // 40% от верха (центр)
-            const targetTop = centerPosition - (symbolIndex * itemHeight) - itemHeight;
-            
-            return `${targetTop}%`;
-        }
-        
-        // Выбор случайного символа с учетом весов
-        function getRandomSymbol() {
-            let random = Math.random() * symbols.reduce((sum, s) => sum + s.weight, 0);
-            for (const symbol of symbols) {
-                if (random < symbol.weight) {
-                    return symbol;
-                }
-                random -= symbol.weight;
-            }
-            return symbols[0];
+            }, 500);
         }
         
         // Проверка выигрышной комбинации
@@ -774,9 +868,12 @@
             
             // Получаем центральные символы каждого барабана
             for (let i = 0; i < 3; i++) {
-                const reelTop = parseFloat(reelElements[i].style.top);
-                const centerIndex = Math.floor((40 - reelTop) / 20);
-                results.push(reels[i][centerIndex].icon);
+                const reel = reelElements[i];
+                const transformY = parseInt(reel.style.transform.split('(')[1]);
+                const itemHeight = 40;
+                const centerIndex = Math.round(transformY / itemHeight);
+                const item = reel.children[centerIndex % reel.children.length];
+                results.push(item.textContent || item.querySelector('div').textContent);
             }
             
             // Определяем выигрыш
@@ -829,15 +926,11 @@
             }
             
             // Показываем сообщение
-            resultMessage.textContent = winMessage;
-            resultMessage.classList.add('show');
-            resultMessage.classList.add('win-animation');
+            messageDisplay.textContent = winMessage;
+            messageDisplay.classList.add('win-animation');
             setTimeout(() => {
-                resultMessage.classList.remove('win-animation');
+                messageDisplay.classList.remove('win-animation');
             }, 1000);
-            
-            // Перезагружаем барабаны для следующего вращения
-            initGame();
         }
         
         // Сохранение баланса
@@ -871,6 +964,23 @@
             // Обработчик кнопки "Назад"
             backButton.addEventListener('click', () => {
                 window.location.href = 'index.html';
+            });
+            
+            // Обработчик кнопки помощи
+            helpButton.addEventListener('click', () => {
+                helpModal.classList.add('active');
+            });
+            
+            // Обработчик закрытия модального окна
+            modalClose.addEventListener('click', () => {
+                helpModal.classList.remove('active');
+            });
+            
+            // Закрытие модального окна по клику на оверлей
+            helpModal.addEventListener('click', (e) => {
+                if (e.target === helpModal) {
+                    helpModal.classList.remove('active');
+                }
             });
             
             // Инициализация игры и пользователя
