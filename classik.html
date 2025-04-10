@@ -21,7 +21,7 @@
         
         .container {
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
             padding: 20px;
             box-sizing: border-box;
         }
@@ -34,6 +34,7 @@
             padding: 10px 15px;
             border-radius: 20px;
             font-weight: bold;
+            z-index: 100;
         }
         
         .btn {
@@ -64,6 +65,7 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
+            margin: 0 5px;
         }
         
         .btn-bet.active {
@@ -133,40 +135,63 @@
             font-weight: bold;
         }
         
-        .bet-container {
+        .players-container {
             display: flex;
-            justify-content: center;
-            gap: 15px;
+            justify-content: space-between;
             margin: 30px 0;
         }
         
-        .player-info {
+        .player {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 20px;
+            width: 45%;
         }
         
-        .avatar {
+        .player-you {
+            align-items: flex-start;
+        }
+        
+        .player-opponent {
+            align-items: flex-end;
+        }
+        
+        .player-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .player-you .player-name {
+            color: #4CAF50;
+        }
+        
+        .player-opponent .player-name {
+            color: #f44336;
+        }
+        
+        .player-avatar {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            margin-bottom: 10px;
-            border: 3px solid;
             object-fit: cover;
+            margin-bottom: 10px;
         }
         
-        .avatar-you {
-            border-color: #4CAF50;
+        .player-bet-amount {
+            font-size: 18px;
+            color: #4CAF50;
+            font-weight: bold;
         }
         
-        .avatar-opponent {
-            border-color: #f44336;
+        .bet-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
         }
         
         .slot-machine {
             width: 100%;
-            height: 150px;
+            height: 200px;
             position: relative;
             overflow: hidden;
             margin: 30px 0;
@@ -177,18 +202,46 @@
         .slot-content {
             display: flex;
             position: absolute;
-            width: 200%;
+            width: 300%;
             height: 100%;
-            left: 0;
+            left: -100%;
             transition: transform 0.1s;
         }
         
-        .slot-avatar {
-            width: 50%;
+        .slot-item {
+            width: 33.33%;
             height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        
+        .slot-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .slot-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background-color: white;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        
+        .slot-line::before {
+            content: "▼";
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 20px;
+            color: white;
         }
         
         .result {
@@ -205,17 +258,10 @@
         .lose {
             color: #f44336;
         }
-        
-        .bet-amount {
-            font-size: 18px;
-            margin-top: 5px;
-            color: #4CAF50;
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
-    <div class="balance" id="balance">1000р</div>
+    <div class="balance" id="balance">0р</div>
     
     <div class="container">
         <div id="main-menu">
@@ -239,14 +285,18 @@
                 <div class="timer-text" id="timer">30</div>
             </div>
             
-            <div class="player-info">
-                <img src="https://i.imgur.com/JqYeYnR.png" class="avatar avatar-you" id="your-avatar">
-                <div id="your-bet">Ваша ставка: <span class="bet-amount">1р</span></div>
-            </div>
-            
-            <div class="player-info">
-                <img src="https://i.imgur.com/3QZxJ9u.png" class="avatar avatar-opponent" id="opponent-avatar">
-                <div id="opponent-bet">Ставка соперника: <span class="bet-amount">1р</span></div>
+            <div class="players-container">
+                <div class="player player-you">
+                    <div class="player-name">Вы</div>
+                    <img src="https://i.imgur.com/JqYeYnR.png" class="player-avatar" id="your-avatar">
+                    <div class="player-bet-amount" id="your-bet">1р</div>
+                </div>
+                
+                <div class="player player-opponent">
+                    <div class="player-name">Соперник</div>
+                    <img src="https://i.imgur.com/3QZxJ9u.png" class="player-avatar" id="opponent-avatar">
+                    <div class="player-bet-amount" id="opponent-bet">1р</div>
+                </div>
             </div>
             
             <div class="bet-container">
@@ -256,12 +306,16 @@
             </div>
             
             <div class="slot-machine" id="slot-machine" style="display: none;">
+                <div class="slot-line"></div>
                 <div class="slot-content" id="slot-content">
-                    <div class="slot-avatar">
-                        <img src="https://i.imgur.com/JqYeYnR.png" class="avatar" style="width: 120px; height: 120px;">
+                    <div class="slot-item">
+                        <img src="https://i.imgur.com/3QZxJ9u.png" class="slot-image">
                     </div>
-                    <div class="slot-avatar">
-                        <img src="https://i.imgur.com/3QZxJ9u.png" class="avatar" style="width: 120px; height: 120px;">
+                    <div class="slot-item">
+                        <img src="https://i.imgur.com/JqYeYnR.png" class="slot-image">
+                    </div>
+                    <div class="slot-item">
+                        <img src="https://i.imgur.com/3QZxJ9u.png" class="slot-image">
                     </div>
                 </div>
             </div>
@@ -290,7 +344,7 @@
         const ROOM_ID = "classic_room";
         let currentUserId = localStorage.getItem('user_id') || 'user_' + Math.random().toString(36).substr(2, 8);
         localStorage.setItem('user_id', currentUserId);
-        let currentBalance = parseInt(localStorage.getItem('balance')) || 1000;
+        let currentBalance = 0;
         let isInRoom = false;
         let isCreator = false;
         let gameInterval = null;
@@ -299,7 +353,9 @@
         let opponentBet = 1;
         let gameState = 'waiting';
         let roomRef = null;
+        let userRef = null;
         let spinInterval = null;
+        let lastBetTime = 0;
 
         // DOM элементы
         const mainMenu = document.getElementById('main-menu');
@@ -319,16 +375,54 @@
         const resultElement = document.getElementById('result');
         const balanceElement = document.getElementById('balance');
 
+        // Инициализация пользователя
+        function initUser() {
+            userRef = database.ref('users/' + currentUserId);
+            
+            userRef.on('value', (snapshot) => {
+                const userData = snapshot.val();
+                
+                if (!userData) {
+                    // Создаем нового пользователя с начальным балансом 1000
+                    userRef.set({
+                        balance: 1000,
+                        lastActive: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } else {
+                    // Обновляем баланс
+                    currentBalance = userData.balance || 0;
+                    updateBalance();
+                    
+                    // Обновляем время последней активности
+                    userRef.update({
+                        lastActive: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+            });
+            
+            // Очистка при выходе
+            userRef.onDisconnect().update({
+                lastActive: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+
         // Обновление баланса
         function updateBalance() {
             balanceElement.textContent = currentBalance + "р";
-            localStorage.setItem('balance', currentBalance.toString());
+        }
+
+        // Обновление баланса на сервере
+        function updateServerBalance(amount) {
+            currentBalance = amount;
+            userRef.update({
+                balance: amount,
+                lastActive: firebase.database.ServerValue.TIMESTAMP
+            });
         }
 
         // Инициализация комнаты
         function initRoom() {
             roomRef = database.ref('rooms/' + ROOM_ID);
-            updateBalance();
             
             // Слушаем изменения в комнате
             roomRef.on('value', (snapshot) => {
@@ -467,8 +561,7 @@
                 }
                 
                 isInRoom = true;
-                currentBalance -= 1; // Списываем 1р за вход
-                updateBalance();
+                updateServerBalance(currentBalance - 1); // Списываем 1р за вход
                 return room;
             });
         });
@@ -499,8 +592,7 @@
                 }
                 
                 if (shouldRefund) {
-                    currentBalance += 1; // Возвращаем 1р
-                    updateBalance();
+                    updateServerBalance(currentBalance + 1); // Возвращаем 1р
                 }
                 
                 isInRoom = false;
@@ -508,16 +600,25 @@
             });
         });
 
-        // Увеличение ставки
+        // Увеличение ставки с задержкой
         betButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 if (gameState !== 'betting') return;
+                
+                const now = Date.now();
+                if (now - lastBetTime < 500) return; // Задержка 500мс между ставками
+                lastBetTime = now;
                 
                 const betAmount = parseInt(btn.dataset.bet);
                 if (currentBalance < betAmount) {
                     alert("Недостаточно средств!");
                     return;
                 }
+                
+                // Подсветка кнопки
+                betButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                setTimeout(() => btn.classList.remove('active'), 300);
                 
                 // Обновляем ставку в базе данных
                 if (isCreator) {
@@ -530,20 +631,14 @@
                     });
                 }
                 
-                currentBalance -= betAmount;
-                updateBalance();
-                
-                // Подсветка кнопки
-                betButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                setTimeout(() => btn.classList.remove('active'), 300);
+                updateServerBalance(currentBalance - betAmount);
             });
         });
 
         // Обновление отображения ставок
         function updateBetDisplay() {
-            document.querySelector('#your-bet .bet-amount').textContent = yourBet + "р";
-            document.querySelector('#opponent-bet .bet-amount').textContent = opponentBet + "р";
+            yourBetElement.textContent = yourBet + "р";
+            opponentBetElement.textContent = opponentBet + "р";
         }
 
         // Запуск таймера игры
@@ -571,7 +666,7 @@
             }, 1000);
         }
 
-        // Запуск вращения слота
+        // Запуск вращения слота с плавным стартом и замедлением
         function startSpinning() {
             slotMachine.style.display = 'block';
             clearInterval(spinInterval);
@@ -580,6 +675,17 @@
             const startTime = Date.now();
             const endTime = startTime + spinDuration;
             let lastShift = 0;
+            let speed = 0;
+            let direction = 1;
+            
+            // Плавный старт
+            const accelerateInterval = setInterval(() => {
+                speed = Math.min(1, speed + 0.05);
+                
+                if (speed >= 1) {
+                    clearInterval(accelerateInterval);
+                }
+            }, 50);
             
             spinInterval = setInterval(() => {
                 const currentTime = Date.now();
@@ -590,11 +696,24 @@
                     finishSpinning();
                 } else {
                     // Плавное замедление вращения
-                    const speed = Math.max(0.1, 1 - progress * 0.9);
+                    if (progress > 0.7) {
+                        speed = Math.max(0.1, speed - 0.02);
+                    }
                     
-                    if (currentTime - lastShift > 100 * speed) {
-                        const shift = Math.random() > 0.5 ? 0 : 50;
-                        slotContent.style.transform = `translateX(-${shift}%)`;
+                    if (currentTime - lastShift > 100 / speed) {
+                        const currentPos = parseInt(slotContent.style.transform?.replace('translateX(', '').replace('%)', '') || 0);
+                        let newPos = currentPos + (direction * 50);
+                        
+                        // Если достигли края, меняем направление
+                        if (newPos <= -150) {
+                            newPos = -100;
+                            direction = 1;
+                        } else if (newPos >= 0) {
+                            newPos = -50;
+                            direction = -1;
+                        }
+                        
+                        slotContent.style.transform = `translateX(${newPos}%)`;
                         lastShift = currentTime;
                     }
                 }
@@ -608,8 +727,9 @@
             const yourChance = yourBet / totalBet;
             const isWinner = Math.random() < yourChance;
             
-            // Останавливаем на выбранном аватаре
-            slotContent.style.transform = `translateX(-${isWinner ? 0 : 50}%)`;
+            // Останавливаем на выбранной позиции (0% - выигрыш, -100% - проигрыш)
+            slotContent.style.transition = 'transform 1.5s cubic-bezier(0.22, 1, 0.36, 1)';
+            slotContent.style.transform = `translateX(${isWinner ? '0%' : '-100%'})`;
             
             // Обновляем статус комнаты
             roomRef.update({
@@ -627,13 +747,12 @@
             if (isWinner) {
                 resultElement.textContent = `Ты выиграл ${winAmount}р!`;
                 resultElement.className = 'result win';
-                currentBalance += winAmount;
+                updateServerBalance(currentBalance + winAmount);
             } else {
                 resultElement.textContent = `Ты проиграл ${yourBet}р`;
                 resultElement.className = 'result lose';
             }
             
-            updateBalance();
             resultElement.style.display = 'block';
             
             // Через 5 секунд сбрасываем комнату
@@ -652,6 +771,7 @@
                 mainMenu.style.display = 'block';
                 resultElement.style.display = 'none';
                 slotMachine.style.display = 'none';
+                slotContent.style.transition = 'none';
                 isInRoom = false;
                 gameState = 'waiting';
             }, 5000);
@@ -659,7 +779,7 @@
 
         // Очистка при выходе
         window.addEventListener('beforeunload', () => {
-            if (isInRoom && gameState !== 'finished') {
+            if (isInRoom && gameState === 'waiting') {
                 roomRef.transaction((room) => {
                     if (!room) return;
                     
@@ -688,6 +808,7 @@
         });
 
         // Инициализация при загрузке
+        initUser();
         initRoom();
     </script>
 </body>
