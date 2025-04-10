@@ -58,10 +58,17 @@
             color: white;
             font-weight: bold;
             font-size: 14px;
+            transition: all 0.3s;
         }
         
         .balance-up {
             animation: balanceUp 0.5s ease-out;
+            color: #4caf50;
+        }
+        
+        .balance-down {
+            animation: balanceDown 0.5s ease-out;
+            color: #f44336;
         }
         
         .game-board {
@@ -337,8 +344,8 @@
         
         .loading-spinner {
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             margin-bottom: 15px;
         }
         
@@ -346,10 +353,10 @@
             position: absolute;
             width: 100%;
             height: 100%;
-            border: 8px solid transparent;
+            border: 6px solid transparent;
             border-top-color: #1a73e8;
             border-radius: 50%;
-            animation: spin 2s linear infinite;
+            animation: spin 1s linear infinite;
         }
         
         .loading-text {
@@ -443,9 +450,15 @@
         }
         
         @keyframes balanceUp {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+            0% { transform: scale(1); color: white; }
+            50% { transform: scale(1.2); color: #4caf50; }
+            100% { transform: scale(1); color: white; }
+        }
+        
+        @keyframes balanceDown {
+            0% { transform: scale(1); color: white; }
+            50% { transform: scale(1.2); color: #f44336; }
+            100% { transform: scale(1); color: white; }
         }
         
         @keyframes fragmentFly {
@@ -464,7 +477,7 @@
         <div class="loading-spinner">
             <div class="loading-circle"></div>
         </div>
-        <div class="loading-text" id="loadingText">Получение данных... 0%</div>
+        <div class="loading-text" id="loadingText">Загрузка...</div>
     </div>
 
     <div class="no-balance" id="noBalance" style="display: none;">Недостаточный баланс для игры</div>
@@ -737,17 +750,8 @@
             userId = getUserId();
             dbRef = database.ref('users/' + userId);
             
-            // Анимация загрузки
-            let progress = 0;
-            const loadingInterval = setInterval(() => {
-                progress += 2;
-                if (progress > 100) progress = 100;
-                loadingText.textContent = `Получение данных... ${progress}%`;
-                
-                if (progress === 100) {
-                    clearInterval(loadingInterval);
-                }
-            }, 50);
+            // Быстрая загрузка (1 секунда)
+            loadingText.textContent = "Загрузка...";
             
             try {
                 // Проверяем соединение с Firebase
@@ -788,11 +792,11 @@
                 console.error("Ошибка загрузки:", error);
                 handleLoadError();
             } finally {
-                // Завершаем анимацию загрузки через 2.5 секунды
+                // Завершаем анимацию загрузки через 1 секунду
                 setTimeout(() => {
                     loadingElement.style.display = 'none';
                     updateControls();
-                }, 2500);
+                }, 1000);
             }
         }
 
@@ -921,9 +925,17 @@
             }
             
             // Снимаем ставку с баланса
+            const oldBalance = balance;
             balance -= currentBet;
+            
+            // Анимация уменьшения баланса
+            balanceElement.classList.add('balance-down');
+            setTimeout(() => {
+                balanceElement.classList.remove('balance-down');
+                balanceElement.textContent = balance.toFixed(2) + ' ₽';
+            }, 500);
+            
             updateBalanceInDB(balance);
-            updateUI();
             
             // Генерируем позиции бомб
             generateBombs();
@@ -1073,6 +1085,7 @@
             balanceElement.classList.add('balance-up');
             setTimeout(() => {
                 balanceElement.classList.remove('balance-up');
+                balanceElement.textContent = balance.toFixed(2) + ' ₽';
             }, 500);
             
             updateBalanceInDB(balance);
