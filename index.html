@@ -162,10 +162,42 @@
             font-size: 16px;
             cursor: pointer;
         }
+        .maintenance {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .maintenance h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #f44336;
+        }
+        .maintenance p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 500px;
+        }
     </style>
 </head>
 <body>
     <div class="loading" id="loading">Инициализация...</div>
+    
+    <div class="maintenance" id="maintenance">
+        <h2>Технический перерыв</h2>
+        <p>В настоящее время проводятся технические работы. Пожалуйста, попробуйте позже.</p>
+        <button onclick="checkMaintenance()">Проверить снова</button>
+    </div>
     
     <div class="telegram-auth" id="telegramAuth">
         <h2>Для игры требуется авторизация через Telegram</h2>
@@ -173,48 +205,48 @@
         <button onclick="initTelegramAuth()">Войти через Telegram</button>
     </div>
 
-    <div class="header">
-        <div class="logo">VROT-X</div>
-    </div>
-    <div class="account-button" id="accountButton" onclick="goToProfile()">
-        👤 Мой аккаунт
-    </div>
-    <div class="games-container">
-        <div class="games-title-container">
-            <div class="games-title">Наши игры</div>
-            <div class="title-gradient-line"></div>
+    <div id="appContent" style="display: none;">
+        <div class="header">
+            <div class="logo">VROT-X</div>
         </div>
-        <div class="games-grid">
-            <!-- Доступные игры -->
-            <div class="game-card" onclick="openGame('miner')">
-                <div class="game-icon">💣</div>
-                <div class="game-name">Минер</div>
+        <div class="account-button" id="accountButton" onclick="goToProfile()">
+            👤 Мой аккаунт
+        </div>
+        <div class="games-container">
+            <div class="games-title-container">
+                <div class="games-title">Наши игры</div>
+                <div class="title-gradient-line"></div>
             </div>
-            <div class="game-card" onclick="goToSlots()">
-                <div class="game-icon">🎰</div>
-                <div class="game-name">Слоты</div>
-            </div>
-            <div class="game-card" onclick="goToCrash()">
-                <div class="game-icon">📉</div>
-                <div class="game-name">Краш</div>
-            </div>
-            <div class="game-card" onclick="goToClassic()">
-                <div class="game-icon">🃏</div>
-                <div class="game-name">Классик</div>
-            </div>
-            <div class="game-card" onclick="goToPlinko()">
-                <div class="game-icon">🎯</div>
-                <div class="game-name">Плинко</div>
-            </div>
-            
-            <!-- Заблокированные игры -->
-            <div class="game-card locked-game" onclick="showLockedMessage()">
-                <div class="game-icon">🎲</div>
-                <div class="game-name">Кости</div>
-            </div>
-            <div class="game-card locked-game" onclick="showLockedMessage()">
-                <div class="game-icon">🎡</div>
-                <div class="game-name">Рулетка</div>
+            <div class="games-grid">
+                <div class="game-card" onclick="openGame('miner')">
+                    <div class="game-icon">💣</div>
+                    <div class="game-name">Минер</div>
+                </div>
+                <div class="game-card" onclick="goToSlots()">
+                    <div class="game-icon">🎰</div>
+                    <div class="game-name">Слоты</div>
+                </div>
+                <div class="game-card" onclick="goToCrash()">
+                    <div class="game-icon">📉</div>
+                    <div class="game-name">Краш</div>
+                </div>
+                <div class="game-card" onclick="goToClassic()">
+                    <div class="game-icon">🃏</div>
+                    <div class="game-name">Классик</div>
+                </div>
+                <div class="game-card" onclick="goToPlinko()">
+                    <div class="game-icon">🎯</div>
+                    <div class="game-name">Плинко</div>
+                </div>
+                
+                <div class="game-card locked-game" onclick="showLockedMessage()">
+                    <div class="game-icon">🎲</div>
+                    <div class="game-name">Кости</div>
+                </div>
+                <div class="game-card locked-game" onclick="showLockedMessage()">
+                    <div class="game-icon">🎡</div>
+                    <div class="game-name">Рулетка</div>
+                </div>
             </div>
         </div>
     </div>
@@ -240,7 +272,34 @@
         let dbRef = null;
         let loadingElement = document.getElementById('loading');
         let telegramAuthElement = document.getElementById('telegramAuth');
+        let maintenanceElement = document.getElementById('maintenance');
+        let appContentElement = document.getElementById('appContent');
         let tg = null;
+
+        // Проверка технического обслуживания
+        async function checkMaintenance() {
+            try {
+                loadingElement.style.display = 'flex';
+                maintenanceElement.style.display = 'none';
+                
+                const maintenanceRef = database.ref('maintenance');
+                const snapshot = await maintenanceRef.once('value');
+                const maintenanceMode = snapshot.val();
+                
+                if (maintenanceMode === true || maintenanceMode === 'true' || maintenanceMode === 'True') {
+                    maintenanceElement.style.display = 'flex';
+                    appContentElement.style.display = 'none';
+                } else {
+                    initUser();
+                }
+            } catch (error) {
+                console.error("Ошибка проверки технического обслуживания:", error);
+                // В случае ошибки продолжаем как обычно
+                initUser();
+            } finally {
+                loadingElement.style.display = 'none';
+            }
+        }
 
         // Получение Telegram ID из cookie
         function getTelegramIdFromCookie() {
@@ -292,6 +351,7 @@
                 // Показываем окно авторизации
                 telegramAuthElement.style.display = 'flex';
                 loadingElement.style.display = 'none';
+                appContentElement.style.display = 'none';
                 return;
             }
             
@@ -315,6 +375,7 @@
                 }
                 
                 loadingElement.style.display = 'none';
+                appContentElement.style.display = 'block';
             } catch (error) {
                 console.error("Ошибка подключения:", error);
                 loadingElement.textContent = "Ошибка подключения";
@@ -350,7 +411,6 @@
             window.location.href = "crash.html";
         }
 
-        // Добавлена функция перехода на Plinko
         function goToPlinko() {
             window.location.href = "plinko.html";
         }
@@ -360,8 +420,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Проверяем авторизацию при загрузке
-            initUser();
+            // Сначала проверяем техническое обслуживание
+            checkMaintenance();
             
             setTimeout(() => {
                 if (loadingElement.style.display !== 'none') {
