@@ -7,67 +7,93 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
             background-color: #121212;
             color: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         
         .header {
             display: flex;
             justify-content: space-between;
-            padding: 15px;
+            padding: 10px 15px;
             background-color: #1a1a1a;
+            flex-shrink: 0;
         }
         
         .back-button {
             background-color: #4CAF50;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 15px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
         }
         
         .balance {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
         }
         
-        .game-container {
+        .game-wrapper {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
+            padding: 10px;
+            overflow: hidden;
         }
         
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-            width: 80%;
-            max-width: 500px;
+            gap: 10px;
+            margin-bottom: 10px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+        
+        .selector-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .selector-title {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 3px;
         }
         
         .difficulty-selector, .cells-selector {
             display: flex;
             justify-content: space-between;
             background-color: #1e1e1e;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 8px;
         }
         
         .difficulty-btn, .cells-btn {
-            padding: 8px 15px;
+            padding: 6px 10px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             background-color: #333;
             color: white;
+            font-size: 12px;
+            flex: 1;
+            margin: 0 2px;
+            text-align: center;
         }
         
         .difficulty-btn.active, .cells-btn.active {
@@ -79,61 +105,124 @@
             justify-content: space-between;
             align-items: center;
             background-color: #1e1e1e;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 8px;
         }
         
         .bet-amount {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: bold;
+            margin: 0 10px;
         }
         
         .bet-btn {
-            padding: 10px;
+            padding: 8px 12px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             background-color: #4CAF50;
             color: white;
-            font-size: 16px;
+            font-size: 14px;
+        }
+        
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .drop-zone {
+            height: 20%;
+            background-color: #1a1a1a;
+            border-bottom: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .drop-text {
+            font-size: 14px;
+            color: #4CAF50;
         }
         
         .plinko-board {
-            width: 300px;
-            height: 400px;
+            flex: 1;
             background-color: #1a1a1a;
             position: relative;
-            margin-top: 20px;
-            border-radius: 10px;
             overflow: hidden;
         }
         
         .ball {
             position: absolute;
-            width: 15px;
-            height: 15px;
+            width: 12px;
+            height: 12px;
             background-color: #4CAF50;
             border-radius: 50%;
             z-index: 10;
+            pointer-events: none;
         }
         
         .peg {
             position: absolute;
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             background-color: #555;
             border-radius: 50%;
+            pointer-events: none;
         }
         
         .cell {
             position: absolute;
             bottom: 0;
-            height: 30px;
+            height: 20px;
             border-top: 2px solid #4CAF50;
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
+            font-size: 10px;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .win-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 100;
+            text-align: center;
+            max-width: 80%;
+            animation: fadeIn 0.3s;
+        }
+        
+        .win-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 5px 0;
+        }
+        
+        .win-multiplier {
+            font-size: 16px;
+            color: #aaa;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -40%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translate(-50%, -50%); }
+            to { opacity: 0; transform: translate(-50%, -60%); }
         }
     </style>
 </head>
@@ -143,29 +232,40 @@
         <div class="balance" id="balance">Загрузка...</div>
     </div>
     
-    <div class="game-container">
+    <div class="game-wrapper">
         <div class="controls">
-            <div class="difficulty-selector">
-                <button class="difficulty-btn active" data-difficulty="easy">Легкий</button>
-                <button class="difficulty-btn" data-difficulty="medium">Средний</button>
-                <button class="difficulty-btn" data-difficulty="hard">Сложный</button>
+            <div class="selector-container">
+                <div class="selector-title">Уровень сложности</div>
+                <div class="difficulty-selector">
+                    <button class="difficulty-btn active" data-difficulty="easy">Легкий</button>
+                    <button class="difficulty-btn" data-difficulty="medium">Средний</button>
+                    <button class="difficulty-btn" data-difficulty="hard">Сложный</button>
+                </div>
             </div>
             
-            <div class="cells-selector">
-                <button class="cells-btn active" data-cells="8">8 ячеек</button>
-                <button class="cells-btn" data-cells="12">12 ячеек</button>
-                <button class="cells-btn" data-cells="16">16 ячеек</button>
+            <div class="selector-container">
+                <div class="selector-title">Количество ячеек</div>
+                <div class="cells-selector">
+                    <button class="cells-btn active" data-cells="8">8</button>
+                    <button class="cells-btn" data-cells="12">12</button>
+                    <button class="cells-btn" data-cells="16">16</button>
+                </div>
             </div>
             
             <div class="bet-controls">
                 <button class="bet-btn" id="decrease-bet">-</button>
-                <div class="bet-amount" id="bet-amount">10</div>
+                <div class="bet-amount" id="bet-amount">1</div>
                 <button class="bet-btn" id="increase-bet">+</button>
                 <button class="bet-btn" id="start-game">Играть</button>
             </div>
         </div>
         
-        <div class="plinko-board" id="plinko-board"></div>
+        <div class="game-area">
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-text">Нажмите или перетащите шарик</div>
+            </div>
+            <div class="plinko-board" id="plinko-board"></div>
+        </div>
     </div>
 
     <script>
@@ -180,9 +280,11 @@
             appId: "1:622297225288:web:5df6a5b02ffddedd96e07d"
         };
         
-        // Инициализируем Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        
+        // Текущий активный элемент уведомления о выигрыше
+        let activeWinNotification = null;
         
         // Получаем ID из куки
         function getTelegramIdFromCookie() {
@@ -216,7 +318,7 @@
         // Обновляем баланс в Firebase
         function updateBalance(amount) {
             const telegramId = getTelegramIdFromCookie();
-            if (!telegramId) return;
+            if (!telegramId) return Promise.reject('Не авторизован');
             
             return new Promise((resolve, reject) => {
                 database.ref('users/' + telegramId).transaction((user) => {
@@ -236,6 +338,39 @@
             });
         }
         
+        // Показываем уведомление о выигрыше
+        function showWinNotification(amount, multiplier) {
+            // Закрываем предыдущее уведомление, если есть
+            if (activeWinNotification) {
+                activeWinNotification.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => {
+                    activeWinNotification.remove();
+                }, 300);
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = 'win-notification';
+            notification.innerHTML = `
+                <div>Вы выиграли:</div>
+                <div class="win-amount">${amount} ₽</div>
+                <div class="win-multiplier">${multiplier.toFixed(2)}x</div>
+            `;
+            
+            document.body.appendChild(notification);
+            activeWinNotification = notification;
+            
+            // Автоматическое закрытие через 3 секунды
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => {
+                    notification.remove();
+                    if (activeWinNotification === notification) {
+                        activeWinNotification = null;
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
         // Инициализация игры
         document.addEventListener('DOMContentLoaded', () => {
             // Загрузка баланса
@@ -248,7 +383,8 @@
             
             let currentDifficulty = 'easy';
             let currentCells = 8;
-            let currentBet = 10;
+            let currentBet = 1;
+            let canDropBall = true;
             
             // Обработчики кнопок сложности
             const difficultyButtons = document.querySelectorAll('.difficulty-btn');
@@ -257,7 +393,7 @@
                     difficultyButtons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentDifficulty = btn.dataset.difficulty;
-                    console.log('Выбрана сложность:', currentDifficulty);
+                    initBoard();
                 });
             });
             
@@ -268,27 +404,48 @@
                     cellsButtons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentCells = parseInt(btn.dataset.cells);
-                    console.log('Выбрано ячеек:', currentCells);
                     initBoard();
                 });
             });
             
             // Управление ставкой
             document.getElementById('increase-bet').addEventListener('click', () => {
-                currentBet += 10;
+                currentBet += 1;
                 updateBetDisplay();
             });
             
             document.getElementById('decrease-bet').addEventListener('click', () => {
-                if (currentBet > 10) {
-                    currentBet -= 10;
+                if (currentBet > 1) {
+                    currentBet -= 1;
                     updateBetDisplay();
                 }
             });
             
             // Кнопка начала игры
             document.getElementById('start-game').addEventListener('click', () => {
-                startGame(currentBet, currentDifficulty, currentCells);
+                if (canDropBall) {
+                    startGame(currentBet, currentDifficulty, currentCells);
+                }
+            });
+            
+            // Обработчик зоны сброса шарика
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.addEventListener('click', () => {
+                if (canDropBall) {
+                    startGame(currentBet, currentDifficulty, currentCells);
+                }
+            });
+            
+            // Drag and drop для шарика
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (canDropBall) {
+                    startGame(currentBet, currentDifficulty, currentCells);
+                }
             });
             
             function updateBetDisplay() {
@@ -309,27 +466,16 @@
                     cell.style.left = `${i * cellWidth}px`;
                     
                     // Множители в зависимости от сложности и позиции ячейки
-                    let multiplier = 1;
-                    const centerPos = (currentCells / 2) - 0.5;
-                    const distanceFromCenter = Math.abs(i - centerPos);
-                    
-                    if (currentDifficulty === 'easy') {
-                        multiplier = 0.5 + (distanceFromCenter / centerPos) * 3;
-                    } else if (currentDifficulty === 'medium') {
-                        multiplier = 0.2 + (distanceFromCenter / centerPos) * 5;
-                    } else {
-                        multiplier = 0.1 + (distanceFromCenter / centerPos) * 8;
-                    }
-                    
+                    let multiplier = calculateMultiplier(i, currentCells, currentDifficulty);
                     cell.textContent = `${multiplier.toFixed(1)}x`;
                     board.appendChild(cell);
                 }
                 
                 // Создаем пины (шарики-препятствия)
-                const rows = 12;
+                const rows = Math.floor(board.offsetHeight * 0.7 / 20); // Количество рядов
                 const cols = currentCells - 1;
                 const pinSpacingX = board.offsetWidth / cols;
-                const pinSpacingY = board.offsetHeight / rows;
+                const pinSpacingY = (board.offsetHeight * 0.7) / rows;
                 
                 for (let row = 0; row < rows; row++) {
                     const pinsInRow = cols - (row % 2);
@@ -339,11 +485,31 @@
                         
                         const offsetX = row % 2 ? pinSpacingX / 2 : 0;
                         pin.style.left = `${col * pinSpacingX + offsetX}px`;
-                        pin.style.top = `${row * pinSpacingY}px`;
+                        pin.style.top = `${row * pinSpacingY + board.offsetHeight * 0.3}px`;
                         
                         board.appendChild(pin);
                     }
                 }
+            }
+            
+            // Расчет множителя для ячейки
+            function calculateMultiplier(cellIndex, totalCells, difficulty) {
+                const centerPos = (totalCells - 1) / 2;
+                const distanceFromCenter = Math.abs(cellIndex - centerPos);
+                const maxDistance = centerPos;
+                const normalizedDistance = distanceFromCenter / maxDistance;
+                
+                // Базовые параметры для разных уровней сложности
+                const params = {
+                    easy: { min: 0.8, max: 3, curve: 1.5 },
+                    medium: { min: 0.5, max: 5, curve: 2 },
+                    hard: { min: 0.2, max: 8, curve: 2.5 }
+                };
+                
+                const { min, max, curve } = params[difficulty];
+                
+                // Кривая для расчета множителя
+                return min + (max - min) * Math.pow(normalizedDistance, curve);
             }
             
             // Запуск игры
@@ -354,6 +520,9 @@
                     return;
                 }
                 
+                if (!canDropBall) return;
+                canDropBall = false;
+                
                 try {
                     // Проверяем баланс
                     const snapshot = await database.ref('users/' + telegramId + '/balance').once('value');
@@ -361,6 +530,7 @@
                     
                     if (balance < bet) {
                         alert('Недостаточно средств!');
+                        canDropBall = true;
                         return;
                     }
                     
@@ -372,6 +542,7 @@
                 } catch (error) {
                     console.error("Ошибка при запуске игры:", error);
                     alert('Произошла ошибка при запуске игры');
+                    canDropBall = true;
                 }
             }
             
@@ -380,69 +551,113 @@
                 const board = document.getElementById('plinko-board');
                 const ball = document.createElement('div');
                 ball.className = 'ball';
-                ball.style.left = `${board.offsetWidth / 2 - 7.5}px`;
-                board.appendChild(ball);
                 
-                let posX = board.offsetWidth / 2 - 7.5;
-                let posY = 0;
-                const speedY = 2;
-                let velocityX = 0;
+                // Начальная позиция шарика - случайная в верхней части зоны сброса
+                const dropZone = document.getElementById('drop-zone');
+                const startX = dropZone.offsetLeft + (Math.random() * dropZone.offsetWidth);
                 
-                const animation = setInterval(() => {
-                    posY += speedY;
+                ball.style.left = `${startX - 6}px`;
+                ball.style.top = `${dropZone.offsetTop + dropZone.offsetHeight/2 - 6}px`;
+                document.body.appendChild(ball);
+                
+                let posX = startX;
+                let posY = dropZone.offsetTop + dropZone.offsetHeight/2;
+                let velocityX = (Math.random() - 0.5) * 2;
+                let velocityY = 1;
+                const gravity = 0.1;
+                const friction = 0.99;
+                const bounce = 0.7;
+                
+                const animation = () => {
+                    // Применяем гравитацию
+                    velocityY += gravity;
                     
-                    // Гравитация и столкновения
-                    velocityX += (Math.random() - 0.5) * 0.5;
+                    // Обновляем позицию
                     posX += velocityX;
+                    posY += velocityY;
                     
                     // Границы поля
-                    if (posX <= 0) {
-                        posX = 0;
-                        velocityX = Math.abs(velocityX) * 0.7;
-                    } else if (posX >= board.offsetWidth - 15) {
-                        posX = board.offsetWidth - 15;
-                        velocityX = -Math.abs(velocityX) * 0.7;
+                    if (posX <= 6) {
+                        posX = 6;
+                        velocityX = Math.abs(velocityX) * bounce;
+                    } else if (posX >= board.offsetWidth + board.offsetLeft - 6) {
+                        posX = board.offsetWidth + board.offsetLeft - 6;
+                        velocityX = -Math.abs(velocityX) * bounce;
                     }
                     
-                    ball.style.left = `${posX}px`;
-                    ball.style.top = `${posY}px`;
+                    // Столкновение с пинами
+                    const pegs = document.querySelectorAll('.peg');
+                    pegs.forEach(peg => {
+                        const pegRect = peg.getBoundingClientRect();
+                        const ballRect = {
+                            left: posX - 6,
+                            top: posY - 6,
+                            right: posX + 6,
+                            bottom: posY + 6
+                        };
+                        
+                        // Проверка столкновения
+                        if (ballRect.right > pegRect.left && 
+                            ballRect.left < pegRect.right && 
+                            ballRect.bottom > pegRect.top && 
+                            ballRect.top < pegRect.bottom) {
+                            
+                            // Расчет отскока
+                            const dx = (pegRect.left + pegRect.width/2) - posX;
+                            const dy = (pegRect.top + pegRect.height/2) - posY;
+                            const distance = Math.sqrt(dx*dx + dy*dy);
+                            
+                            if (distance < 10) { // Радиус столкновения
+                                const angle = Math.atan2(dy, dx);
+                                const speed = Math.sqrt(velocityX*velocityX + velocityY*velocityY) * bounce;
+                                
+                                velocityX = -Math.cos(angle) * speed;
+                                velocityY = -Math.sin(angle) * speed;
+                                
+                                // Добавляем немного случайности
+                                velocityX += (Math.random() - 0.5) * 0.5;
+                            }
+                        }
+                    });
+                    
+                    // Применяем трение
+                    velocityX *= friction;
+                    velocityY *= friction;
+                    
+                    // Обновляем позицию шарика
+                    ball.style.left = `${posX - 6}px`;
+                    ball.style.top = `${posY - 6}px`;
                     
                     // Если шарик достиг дна
-                    if (posY >= board.offsetHeight - 45) {
-                        clearInterval(animation);
-                        
+                    if (posY >= board.offsetTop + board.offsetHeight - 20) {
                         // Определяем выигрыш
                         const cellWidth = board.offsetWidth / cells;
-                        const cellIndex = Math.min(Math.floor(posX / cellWidth), cells - 1);
+                        const cellIndex = Math.min(Math.floor((posX - board.offsetLeft) / cellWidth), cells - 1);
                         
-                        let multiplier = 1;
-                        const centerPos = (cells / 2) - 0.5;
-                        const distanceFromCenter = Math.abs(cellIndex - centerPos);
-                        
-                        if (difficulty === 'easy') {
-                            multiplier = 0.5 + (distanceFromCenter / centerPos) * 3;
-                        } else if (difficulty === 'medium') {
-                            multiplier = 0.2 + (distanceFromCenter / centerPos) * 5;
-                        } else {
-                            multiplier = 0.1 + (distanceFromCenter / centerPos) * 8;
-                        }
-                        
-                        const winAmount = Math.round(bet * multiplier);
+                        const multiplier = calculateMultiplier(cellIndex, cells, difficulty);
+                        const winAmount = Math.round(bet * multiplier * 10) / 10; // Округляем до 0.1
                         
                         // Обновляем баланс с выигрышем
-                        updateBalance(winAmount).then(() => {
-                            alert(`Вы выиграли ${winAmount} ₽ (${multiplier.toFixed(1)}x)`);
-                        }).catch(error => {
-                            console.error("Ошибка при обновлении баланса:", error);
-                            alert(`Вы выиграли ${winAmount} ₽, но произошла ошибка при зачислении`);
-                        });
+                        updateBalance(winAmount)
+                            .then(() => showWinNotification(winAmount, multiplier))
+                            .catch(error => {
+                                console.error("Ошибка при обновлении баланса:", error);
+                                showWinNotification(winAmount, multiplier);
+                            });
                         
-                        // Удаляем шарик через секунду
+                        // Удаляем шарик
                         setTimeout(() => {
                             ball.remove();
-                        }, 1000);
+                            canDropBall = true;
+                        }, 500);
+                        
+                        return;
                     }
-                }, 20);
+                    
+                    requestAnimationFrame(animation);
+                };
+                
+                requestAnimationFrame(animation);
             }
             
             // Инициализируем поле при загрузке
