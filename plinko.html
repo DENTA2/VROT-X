@@ -139,7 +139,7 @@
 </head>
 <body>
     <div class="header">
-        <button class="back-button" onclick="goBack()">Назад</button>
+        <button class="back-button" id="backButton">Назад</button>
         <div class="balance" id="balance">Загрузка...</div>
     </div>
     
@@ -189,7 +189,7 @@
             const cookies = document.cookie.split(';');
             for (let cookie of cookies) {
                 const [name, value] = cookie.trim().split('=');
-                if (name === 'telegram_id') {
+                if (name === 'tg_user_id') {
                     return value;
                 }
             }
@@ -207,6 +207,9 @@
             database.ref('users/' + telegramId + '/balance').on('value', (snapshot) => {
                 const balance = snapshot.val();
                 document.getElementById('balance').textContent = `Баланс: ${balance || 0} ₽`;
+            }, (error) => {
+                console.error("Ошибка загрузки баланса:", error);
+                document.getElementById('balance').textContent = 'Ошибка загрузки';
             });
         }
         
@@ -215,44 +218,57 @@
             const telegramId = getTelegramIdFromCookie();
             if (!telegramId) return;
             
-            database.ref('users/' + telegramId).transaction((user) => {
-                if (user) {
-                    user.balance = (user.balance || 0) + amount;
-                } else {
-                    user = { balance: amount };
-                }
-                return user;
+            return new Promise((resolve, reject) => {
+                database.ref('users/' + telegramId).transaction((user) => {
+                    if (user) {
+                        user.balance = (user.balance || 0) + amount;
+                    } else {
+                        user = { balance: amount };
+                    }
+                    return user;
+                }, (error, committed, snapshot) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(snapshot.val().balance);
+                    }
+                });
             });
-        }
-        
-        // Переход на главную страницу
-        function goBack() {
-            window.location.href = 'index.html';
         }
         
         // Инициализация игры
         document.addEventListener('DOMContentLoaded', () => {
+            // Загрузка баланса
             loadBalance();
+            
+            // Обработчик кнопки "Назад"
+            document.getElementById('backButton').addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
             
             let currentDifficulty = 'easy';
             let currentCells = 8;
             let currentBet = 10;
             
             // Обработчики кнопок сложности
-            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+            difficultyButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                    difficultyButtons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentDifficulty = btn.dataset.difficulty;
+                    console.log('Выбрана сложность:', currentDifficulty);
                 });
             });
             
             // Обработчики кнопок выбора ячеек
-            document.querySelectorAll('.cells-btn').forEach(btn => {
+            const cellsButtons = document.querySelectorAll('.cells-btn');
+            cellsButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('.cells-btn').forEach(b => b.classList.remove('active'));
+                    cellsButtons.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentCells = parseInt(btn.dataset.cells);
+                    console.log('Выбрано ячеек:', currentCells);
                     initBoard();
                 });
             });
@@ -294,12 +310,15 @@
                     
                     // Множители в зависимости от сложности и позиции ячейки
                     let multiplier = 1;
+                    const centerPos = (currentCells / 2) - 0.5;
+                    const distanceFromCenter = Math.abs(i - centerPos);
+                    
                     if (currentDifficulty === 'easy') {
-                        multiplier = 0.5 + (Math.abs(i - (currentCells / 2 - 0.5)) / (currentCells / 2) * 3;
+                        multiplier = 0.5 + (distanceFromCenter / centerPos) * 3;
                     } else if (currentDifficulty === 'medium') {
-                        multiplier = 0.2 + (Math.abs(i - (currentCells / 2 - 0.5)) / (currentCells / 2) * 5;
+                        multiplier = 0.2 + (distanceFromCenter / centerPos) * 5;
                     } else {
-                        multiplier = 0.1 + (Math.abs(i - (currentCells / 2 - 0.5)) / (currentCells / 2) * 8;
+                        multiplier = 0.1 + (distanceFromCenter / centerPos) * 8;
                     }
                     
                     cell.textContent = `${multiplier.toFixed(1)}x`;
@@ -313,7 +332,8 @@
                 const pinSpacingY = board.offsetHeight / rows;
                 
                 for (let row = 0; row < rows; row++) {
-                    for (let col = 0; col < cols - row % 2; col++) {
+                    const pinsInRow = cols - (row % 2);
+                    for (let col = 0; col < pinsInRow; col++) {
                         const pin = document.createElement('div');
                         pin.className = 'peg';
                         
@@ -327,27 +347,32 @@
             }
             
             // Запуск игры
-            function startGame(bet, difficulty, cells) {
+            async function startGame(bet, difficulty, cells) {
                 const telegramId = getTelegramIdFromCookie();
                 if (!telegramId) {
                     alert('Необходимо авторизоваться!');
                     return;
                 }
                 
-                // Проверяем баланс
-                database.ref('users/' + telegramId + '/balance').once('value').then(snapshot => {
+                try {
+                    // Проверяем баланс
+                    const snapshot = await database.ref('users/' + telegramId + '/balance').once('value');
                     const balance = snapshot.val() || 0;
+                    
                     if (balance < bet) {
                         alert('Недостаточно средств!');
                         return;
                     }
                     
                     // Снимаем ставку
-                    updateBalance(-bet);
+                    await updateBalance(-bet);
                     
                     // Запускаем анимацию падения шарика
                     dropBall(bet, difficulty, cells);
-                });
+                } catch (error) {
+                    console.error("Ошибка при запуске игры:", error);
+                    alert('Произошла ошибка при запуске игры');
+                }
             }
             
             // Анимация падения шарика
@@ -358,21 +383,26 @@
                 ball.style.left = `${board.offsetWidth / 2 - 7.5}px`;
                 board.appendChild(ball);
                 
-                // Простая анимация падения (в реальной игре нужно добавить физику)
                 let posX = board.offsetWidth / 2 - 7.5;
                 let posY = 0;
                 const speedY = 2;
+                let velocityX = 0;
                 
                 const animation = setInterval(() => {
                     posY += speedY;
                     
-                    // Простое "отскакивание" от краев
-                    if (posX <= 0 || posX >= board.offsetWidth - 15) {
-                        posX = posX <= 0 ? 0 : board.offsetWidth - 15;
-                    }
+                    // Гравитация и столкновения
+                    velocityX += (Math.random() - 0.5) * 0.5;
+                    posX += velocityX;
                     
-                    // Случайное движение влево-вправо
-                    posX += (Math.random() - 0.5) * 4;
+                    // Границы поля
+                    if (posX <= 0) {
+                        posX = 0;
+                        velocityX = Math.abs(velocityX) * 0.7;
+                    } else if (posX >= board.offsetWidth - 15) {
+                        posX = board.offsetWidth - 15;
+                        velocityX = -Math.abs(velocityX) * 0.7;
+                    }
                     
                     ball.style.left = `${posX}px`;
                     ball.style.top = `${posY}px`;
@@ -383,21 +413,29 @@
                         
                         // Определяем выигрыш
                         const cellWidth = board.offsetWidth / cells;
-                        const cellIndex = Math.floor(posX / cellWidth);
+                        const cellIndex = Math.min(Math.floor(posX / cellWidth), cells - 1);
                         
                         let multiplier = 1;
+                        const centerPos = (cells / 2) - 0.5;
+                        const distanceFromCenter = Math.abs(cellIndex - centerPos);
+                        
                         if (difficulty === 'easy') {
-                            multiplier = 0.5 + (Math.abs(cellIndex - (cells / 2 - 0.5)) / (cells / 2)) * 3;
+                            multiplier = 0.5 + (distanceFromCenter / centerPos) * 3;
                         } else if (difficulty === 'medium') {
-                            multiplier = 0.2 + (Math.abs(cellIndex - (cells / 2 - 0.5)) / (cells / 2)) * 5;
+                            multiplier = 0.2 + (distanceFromCenter / centerPos) * 5;
                         } else {
-                            multiplier = 0.1 + (Math.abs(cellIndex - (cells / 2 - 0.5)) / (cells / 2)) * 8;
+                            multiplier = 0.1 + (distanceFromCenter / centerPos) * 8;
                         }
                         
                         const winAmount = Math.round(bet * multiplier);
-                        updateBalance(winAmount);
                         
-                        alert(`Вы выиграли ${winAmount} ₽ (${multiplier.toFixed(1)}x)`);
+                        // Обновляем баланс с выигрышем
+                        updateBalance(winAmount).then(() => {
+                            alert(`Вы выиграли ${winAmount} ₽ (${multiplier.toFixed(1)}x)`);
+                        }).catch(error => {
+                            console.error("Ошибка при обновлении баланса:", error);
+                            alert(`Вы выиграли ${winAmount} ₽, но произошла ошибка при зачислении`);
+                        });
                         
                         // Удаляем шарик через секунду
                         setTimeout(() => {
