@@ -366,7 +366,6 @@
         // Глобальные переменные
         let userId = null;
         let dbRef = null;
-        let balance = 0;
         let currentBet = 0;
         let minesCount = 5;
         let gameActive = false;
@@ -388,89 +387,38 @@
         const minesButtons = document.querySelectorAll('.mines-buttons button');
         const actionButton = document.getElementById('actionButton');
 
-        // Генерация ID пользователя
+        // Получить ID пользователя из cookie
         function getUserId() {
-            let localUserId = localStorage.getItem('miner_userId');
-            if (!localUserId) {
-                localUserId = 'user_' + Math.random().toString(36).substr(2, 12) + 
-                            '_' + Date.now().toString(36);
-                localStorage.setItem('miner_userId', localUserId);
-            }
-            return localUserId;
-        }
-
-        // Инициализация пользователя и загрузка баланса
-        async function initUser() {
-            userId = getUserId();
-            dbRef = database.ref('users/' + userId);
-            
-            try {
-                // Проверяем соединение с Firebase
-                const connectedRef = database.ref('.info/connected');
-                connectedRef.on('value', (snap) => {
-                    if (snap.val() === true) {
-                        console.log("Connected to Firebase");
-                    }
-                });
-                
-                // Загружаем данные пользователя
-                const snapshot = await dbRef.once('value');
-                
-                if (snapshot.exists()) {
-                    balance = parseFloat(snapshot.val().balance) || 0;
-                } else {
-                    // Создаем нового пользователя
-                    balance = 0;
-                    await dbRef.set({
-                        balance: balance,
-                        created_at: new Date().toISOString(),
-                        last_active: new Date().toISOString()
-                    });
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'miner_userId') {
+                    return value;
                 }
-                
-                updateUI();
-                
-                // Слушаем изменения баланса в реальном времени
-                dbRef.on('value', (snap) => {
-                    if (snap.exists()) {
-                        const newBalance = parseFloat(snap.val().balance) || 0;
-                        if (newBalance !== balance) {
-                            balance = newBalance;
-                            updateUI();
-                        }
-                    }
-                });
-                
-            } catch (error) {
-                console.error("Ошибка загрузки:", error);
-                // В случае ошибки используем локальный баланс
-                balance = 0;
-                updateUI();
-            } finally {
-                // Скрываем загрузочный экран через 2 секунды
-                setTimeout(() => {
-                    loadingElement.style.display = 'none';
-                    updateControls();
-                }, 2000);
             }
+            // Если нет ID в cookie - создаем новый
+            const newUserId = 'user_' + Math.random().toString(36).substr(2, 12) + 
+                            '_' + Date.now().toString(36);
+            document.cookie = `miner_userId=${newUserId}; path=/; max-age=31536000`; // 1 год
+            return newUserId;
         }
 
-        // Обновление баланса в БД
-        function updateBalanceInDB(newBalance) {
-            if (dbRef) {
-                dbRef.update({ 
-                    balance: newBalance,
-                    last_active: new Date().toISOString()
-                }).catch(error => {
-                    console.error("Ошибка сохранения баланса:", error);
-                });
-            }
-        }
-
-        // Обновление интерфейса
-        function updateUI() {
-            balanceElement.textContent = balance.toFixed(2) + ' ₽';
-            updateControls();
+        // Обновить состояние элементов управления
+        function updateControls(balance) {
+            const hasBalance = balance >= 1;
+            
+            // Блокируем или разблокируем элементы управления
+            betAmountInput.disabled = !hasBalance || gameActive;
+            minBetButton.disabled = !hasBalance || gameActive;
+            halfBetButton.disabled = !hasBalance || gameActive;
+            doubleBetButton.disabled = !hasBalance || gameActive;
+            maxBetButton.disabled = !hasBalance || gameActive;
+            
+            minesButtons.forEach(button => {
+                button.disabled = !hasBalance || gameActive;
+            });
+            
+            actionButton.disabled = !hasBalance || gameActive;
             
             // Обновляем максимальную ставку в инпуте
             betAmountInput.max = balance;
@@ -504,34 +452,28 @@
                 if (isNaN(this.value)) {
                     this.value = 1;
                 }
-                updateControls();
             });
             
             // Кнопки ставок
             minBetButton.addEventListener('click', () => {
                 betAmountInput.value = '1';
-                updateControls();
             });
             
             halfBetButton.addEventListener('click', () => {
                 const current = parseInt(betAmountInput.value) || 0;
                 const newValue = Math.max(1, Math.floor(current / 2));
                 betAmountInput.value = newValue;
-                updateControls();
             });
             
             doubleBetButton.addEventListener('click', () => {
                 const current = parseInt(betAmountInput.value) || 0;
-                const newValue = Math.min(balance, current * 2);
-                betAmountInput.value = newValue;
-                updateControls();
+                betAmountInput.value = current * 2;
             });
             
-            maxBetButton.addEventListener('click', () => {
-                if (balance > 0) {
-                    betAmountInput.value = balance;
-                    updateControls();
-                }
+            maxBetButton.addEventListener('click', async () => {
+                const snapshot = await dbRef.once('value');
+                const balance = parseFloat(snapshot.val().balance) || 0;
+                betAmountInput.value = balance;
             });
             
             // Кнопки выбора количества мин
@@ -541,7 +483,6 @@
                     button.classList.add('active');
                     minesCount = parseInt(button.dataset.mines);
                     updateMultipliersDisplay();
-                    updateControls();
                 });
             });
             
@@ -553,23 +494,27 @@
                     startGame();
                 }
             });
-            
-            // Обновляем отображение множителей
-            updateMultipliersDisplay();
         }
 
         // Начало игры
-        function startGame() {
+        async function startGame() {
             currentBet = parseInt(betAmountInput.value);
             
-            if (isNaN(currentBet) || currentBet <= 0 || currentBet > balance) {
+            if (isNaN(currentBet) || currentBet <= 0) {
+                return;
+            }
+            
+            // Проверяем баланс в Firebase
+            const snapshot = await dbRef.once('value');
+            const balance = parseFloat(snapshot.val().balance) || 0;
+            
+            if (currentBet > balance) {
                 return;
             }
             
             // Снимаем ставку с баланса
-            balance -= currentBet;
-            updateBalanceInDB(balance);
-            updateUI();
+            const newBalance = balance - currentBet;
+            await dbRef.update({ balance: newBalance });
             
             // Генерируем позиции бомб
             generateBombs();
@@ -586,7 +531,6 @@
             // Очищаем поле
             initGameBoard();
             updateMultipliersDisplay();
-            updateControls();
         }
 
         // Генерация позиций бомб
@@ -699,11 +643,15 @@
         }
 
         // Забрать выигрыш
-        function collectWinnings() {
+        async function collectWinnings() {
             const winAmount = parseFloat((currentBet * currentMultiplier).toFixed(2));
-            balance += winAmount;
-            updateBalanceInDB(balance);
-            updateUI();
+            
+            // Получаем текущий баланс и добавляем выигрыш
+            const snapshot = await dbRef.once('value');
+            const currentBalance = parseFloat(snapshot.val().balance) || 0;
+            const newBalance = currentBalance + winAmount;
+            
+            await dbRef.update({ balance: newBalance });
             
             markLastMultiplier('win');
             endGame();
@@ -722,15 +670,51 @@
                     cell.classList.add('bomb');
                 }
             });
-            
-            updateControls();
         }
 
         // Инициализация игры
-        function initGame() {
-            initGameBoard();
-            setupControls();
-            initUser();
+        async function initGame() {
+            userId = getUserId();
+            dbRef = database.ref('users/' + userId);
+            
+            // Проверяем соединение с Firebase
+            const connectedRef = database.ref('.info/connected');
+            connectedRef.on('value', (snap) => {
+                if (snap.val() === true) {
+                    console.log("Connected to Firebase");
+                }
+            });
+            
+            // Инициализируем пользователя в Firebase
+            try {
+                const snapshot = await dbRef.once('value');
+                if (!snapshot.exists()) {
+                    await dbRef.set({
+                        balance: 0,
+                        created_at: new Date().toISOString(),
+                        last_active: new Date().toISOString()
+                    });
+                }
+                
+                // Слушаем изменения баланса
+                dbRef.on('value', (snap) => {
+                    if (snap.exists()) {
+                        const balance = parseFloat(snap.val().balance) || 0;
+                        balanceElement.textContent = balance.toFixed(2) + ' ₽';
+                        updateControls(balance);
+                    }
+                });
+                
+            } catch (error) {
+                console.error("Ошибка инициализации:", error);
+            } finally {
+                // Скрываем загрузочный экран через 2 секунды
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                    initGameBoard();
+                    setupControls();
+                }, 2000);
+            }
         }
 
         // Запуск игры при загрузке страницы
