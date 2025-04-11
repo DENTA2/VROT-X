@@ -32,6 +32,8 @@
             font-size: 18px;
             margin-right: 20px;
             color: white;
+            background: none;
+            border: none;
         }
 
         .header-title {
@@ -275,6 +277,33 @@
             animation: progress 5s linear forwards;
         }
 
+        .telegram-auth {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+        }
+
+        .telegram-auth button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -292,12 +321,18 @@
     </style>
 </head>
 <body>
+    <div class="telegram-auth" id="telegramAuth">
+        <h2>Для просмотра профиля требуется авторизация</h2>
+        <p>Пожалуйста, войдите через Telegram</p>
+        <button onclick="window.location.href='index.html'">Вернуться на главную</button>
+    </div>
+
     <div class="header">
-        <div class="back-button" onclick="goBack()">← Назад</div>
+        <button class="back-button" onclick="goBack()">← Назад</button>
         <div class="header-title">VROT-X</div>
     </div>
 
-    <div class="profile-content">
+    <div class="profile-content" id="profileContent" style="display: none;">
         <div class="avatar-container">
             <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyLDJBMTAsMTAgMCAwLDAgMiwxMkExMCwxMCAwIDAsMCAxMiwyMkExMCwxMCAwIDAsMCAyMiwxMkExMCwxMCAwIDAsMCAxMiwyTTEyLDRBNywyIDAgMCwxIDE5LDExQTcsNyAwIDAsMSAxMiwxOEE3LDcgMCAwLDEgNSwxMUE3LDcgMCAwLDEgMTIsNE0xMiw2QTUsNSAwIDAsMCA3LDExQTUsNSAwIDAsMCAxMiwxNkE1LDUgMCAwLDAgMTcsMTFBNSw1IDAgMCwwIDEyLDZNMTIsOEEzLDMgMCAwLDEgMTUsMTFBNCw0IDAgMCwxIDEyLDE1QTQsNCAwIDAsMSA5LDExQTMsMyAwIDAsMSAxMiw4WiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=" 
                  class="avatar-img" 
@@ -350,15 +385,19 @@
         // Глобальные переменные
         let userId = null;
         let dbRef = null;
+        let telegramAuthElement = document.getElementById('telegramAuth');
+        let profileContentElement = document.getElementById('profileContent');
 
-        // Получение ID пользователя из localStorage
-        function getUserId() {
-            let userId = localStorage.getItem('vrot-x_userId');
-            if (!userId) {
-                userId = 'local_' + Math.random().toString(36).substr(2, 12) + '_' + Date.now().toString(36);
-                localStorage.setItem('vrot-x_userId', userId);
+        // Получение Telegram ID из cookie
+        function getTelegramIdFromCookie() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'tg_user_id') {
+                    return value;
+                }
             }
-            return userId;
+            return null;
         }
 
         // Показ уведомления
@@ -377,12 +416,10 @@
             
             document.body.appendChild(notification);
             
-            // Закрытие по кнопке
             notification.querySelector('.notification-close').addEventListener('click', () => {
                 notification.remove();
             });
             
-            // Автоматическое закрытие через 5 секунд
             setTimeout(() => {
                 notification.remove();
             }, 5000);
@@ -390,7 +427,6 @@
 
         // Активация промокода
         async function activatePromo(promoCode) {
-            const userId = getUserId();
             const promoButton = document.getElementById('promoButton');
             promoButton.disabled = true;
             
@@ -411,7 +447,8 @@
                     
                     await database.ref('users/' + userId).update({
                         balance: newBalance,
-                        promo: true
+                        promo: true,
+                        last_active: new Date().toISOString()
                     });
                     
                     showNotification('success', 'Промокод активирован! +50₽');
@@ -436,11 +473,10 @@
                 const newName = prompt('Введите новый никнейм:', currentName);
                 
                 if (newName && newName.trim() && newName !== currentName) {
-                    const userId = getUserId();
-                    
                     database.ref('users/' + userId).update({
                         username: newName.trim(),
-                        redact_name: true
+                        redact_name: true,
+                        last_active: new Date().toISOString()
                     }).then(() => {
                         usernameElement.textContent = newName.trim();
                         showNotification('success', 'Никнейм успешно изменен!');
@@ -454,7 +490,17 @@
 
         // Загрузка данных пользователя
         function loadUserData() {
-            userId = getUserId();
+            // Проверяем авторизацию
+            userId = getTelegramIdFromCookie();
+            
+            if (!userId) {
+                telegramAuthElement.style.display = 'flex';
+                return;
+            }
+            
+            telegramAuthElement.style.display = 'none';
+            profileContentElement.style.display = 'flex';
+            
             dbRef = database.ref('users/' + userId);
             document.getElementById('userId').textContent = `ID: ${userId}`;
 
