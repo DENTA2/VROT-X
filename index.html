@@ -51,7 +51,6 @@
             background: linear-gradient(rgba(66, 133, 244, 0.1), rgba(66, 133, 244, 0.1)), white;
             transform: translateY(0);
         }
-        /* Игры */
         .games-container {
             padding: 0 20px;
         }
@@ -123,7 +122,6 @@
             font-size: 20px;
             z-index: 1000;
         }
-        /* Стили для заблокированных игр */
         .locked-game {
             background-color: #e0e0e0;
             color: #999;
@@ -139,10 +137,41 @@
         .locked-game .game-icon {
             opacity: 0.6;
         }
+        .telegram-auth {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+        }
+        .telegram-auth button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div class="loading" id="loading">Инициализация...</div>
+    
+    <div class="telegram-auth" id="telegramAuth">
+        <h2>Для игры требуется авторизация через Telegram</h2>
+        <p>Пожалуйста, войдите через Telegram, чтобы продолжить</p>
+        <button onclick="initTelegramAuth()">Войти через Telegram</button>
+    </div>
 
     <div class="header">
         <div class="logo">VROT-X</div>
@@ -156,7 +185,6 @@
             <div class="title-gradient-line"></div>
         </div>
         <div class="games-grid">
-            <!-- Доступные игры -->
             <div class="game-card" onclick="openGame('miner')">
                 <div class="game-icon">💣</div>
                 <div class="game-name">Минер</div>
@@ -174,7 +202,6 @@
                 <div class="game-name">Классик</div>
             </div>
             
-            <!-- Заблокированные игры -->
             <div class="game-card locked-game" onclick="showLockedMessage()">
                 <div class="game-icon">🎲</div>
                 <div class="game-name">Кости</div>
@@ -189,8 +216,10 @@
             </div>
         </div>
     </div>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCMos6Y7C-krTLuKCI4VJG-TFLo6QI--k8",
@@ -202,70 +231,97 @@
             appId: "1:622297225288:web:5df6a5b02ffddedd96e07d"
         };
         
-        // Инициализация Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         
-        // Глобальные переменные
         let userId = null;
         let dbRef = null;
-        let isFirebaseConnected = false;
         let loadingElement = document.getElementById('loading');
+        let telegramAuthElement = document.getElementById('telegramAuth');
+        let tg = null;
 
-        // Функция для создания/получения локального ID пользователя
-        function getOrCreateUserId() {
-            let localUserId = localStorage.getItem('vrot-x_userId');
-            if (!localUserId) {
-                // Генерируем уникальный ID: local_ + случайная строка + timestamp
-                localUserId = 'local_' + Math.random().toString(36).substr(2, 12) + 
-                            '_' + Date.now().toString(36);
-                localStorage.setItem('vrot-x_userId', localUserId);
+        // Получение Telegram ID из cookie
+        function getTelegramIdFromCookie() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'tg_user_id') {
+                    return value;
+                }
             }
-            return localUserId;
+            return null;
+        }
+
+        // Установка cookie с Telegram ID
+        function setTelegramIdCookie(userId) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 год
+            document.cookie = `tg_user_id=${userId};expires=${expires.toUTCString()};path=/`;
+        }
+
+        // Инициализация Telegram WebApp
+        function initTelegramAuth() {
+            tg = window.Telegram.WebApp;
+            tg.expand();
+            
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const tgUser = tg.initDataUnsafe.user;
+                userId = tgUser.id.toString();
+                
+                // Сохраняем ID в cookie
+                setTelegramIdCookie(userId);
+                
+                // Инициализируем пользователя
+                initUser();
+                
+                // Скрываем окно авторизации
+                telegramAuthElement.style.display = 'none';
+            } else {
+                alert('Ошибка авторизации через Telegram');
+            }
         }
 
         // Инициализация пользователя
         async function initUser() {
-            // Получаем или создаем локальный ID
-            userId = getOrCreateUserId();
+            // Проверяем Telegram ID из cookie
+            const tgUserId = getTelegramIdFromCookie();
+            
+            if (!tgUserId) {
+                // Показываем окно авторизации
+                telegramAuthElement.style.display = 'flex';
+                loadingElement.style.display = 'none';
+                return;
+            }
+            
+            userId = tgUserId;
             dbRef = database.ref('users/' + userId);
             
             try {
-                // Проверяем соединение с Firebase
-                await database.ref('.info/connected').once('value');
-                isFirebaseConnected = true;
-                
-                // Проверяем существование пользователя в базе
                 const snapshot = await dbRef.once('value');
                 
                 if (!snapshot.exists()) {
-                    // Создаем нового пользователя
                     await dbRef.set({
                         balance: 0,
                         created_at: new Date().toISOString(),
                         last_active: new Date().toISOString(),
-                        is_local_user: true
+                        is_telegram_user: true
                     });
                 } else {
-                    // Обновляем время последней активности
                     await dbRef.update({
                         last_active: new Date().toISOString()
                     });
                 }
                 
                 loadingElement.style.display = 'none';
-                
             } catch (error) {
-                console.error("Ошибка подключения к Firebase:", error);
-                // Все равно продолжаем работу, но в оффлайн режиме
-                loadingElement.textContent = "Работаем в оффлайн режиме";
+                console.error("Ошибка подключения:", error);
+                loadingElement.textContent = "Ошибка подключения";
                 setTimeout(() => {
                     loadingElement.style.display = 'none';
                 }, 2000);
             }
         }
 
-        // Открытие игры
         function openGame(game) {
             switch(game) {
                 case 'miner':
@@ -276,42 +332,41 @@
             }
         }
 
-        // Переход в профиль
         function goToProfile() {
             window.location.href = "profile.html";
         }
 
-        // Переход на страницу слотов
         function goToSlots() {
             window.location.href = "slots.html";
         }
 
-        // Переход на классические игры
         function goToClassic() {
             window.location.href = "classik.html";
         }
 
-        // Переход на игру Краш
         function goToCrash() {
             window.location.href = "crash.html";
         }
 
-        // Сообщение о заблокированной игре
         function showLockedMessage() {
             alert('Эта игра пока недоступна. Следите за обновлениями!');
         }
 
-        // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', () => {
+            // Проверяем авторизацию при загрузке
             initUser();
             
-            // Гарантированное закрытие загрузки через 5 секунд
             setTimeout(() => {
                 if (loadingElement.style.display !== 'none') {
                     loadingElement.style.display = 'none';
                 }
             }, 5000);
         });
+
+        // Функция для получения текущего Telegram ID (доступна на других страницах)
+        function getCurrentUserId() {
+            return getTelegramIdFromCookie();
+        }
     </script>
 </body>
 </html>
