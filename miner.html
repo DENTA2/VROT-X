@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MINER | VROT-X</title>
+    <title>MINER</title>
     <style>
         * {
             box-sizing: border-box;
@@ -58,17 +58,6 @@
             color: white;
             font-weight: bold;
             font-size: 14px;
-            transition: all 0.3s;
-        }
-        
-        .balance-up {
-            animation: balanceUp 0.5s ease-out;
-            color: #4caf50;
-        }
-        
-        .balance-down {
-            animation: balanceDown 0.5s ease-out;
-            color: #f44336;
         }
         
         .game-board {
@@ -89,9 +78,6 @@
             font-weight: bold;
             font-size: 18px;
             cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
         }
         
         .cell.revealed {
@@ -100,59 +86,6 @@
         
         .cell.bomb {
             background: #f44336;
-            opacity: 0.5;
-            transition: opacity 1s;
-        }
-        
-        .cell .content {
-            z-index: 2;
-        }
-        
-        .particles {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .particle {
-            position: absolute;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-        
-        .explosion {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(255,100,100,0.8) 0%, rgba(255,50,50,0) 70%);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 3;
-        }
-        
-        .smoke {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 4;
-            background: radial-gradient(circle, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%);
-            opacity: 0;
-        }
-        
-        .fragment {
-            position: absolute;
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 5;
         }
         
         .multipliers-container {
@@ -305,113 +238,12 @@
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            position: relative;
         }
         
         .action-button:disabled {
             background: #333;
             color: #888;
             cursor: not-allowed;
-        }
-        
-        .cooldown-timer {
-            position: absolute;
-            right: 15px;
-            font-size: 14px;
-            opacity: 0.7;
-        }
-        
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 20px;
-            z-index: 1000;
-        }
-        
-        .loading-spinner {
-            position: relative;
-            width: 60px;
-            height: 60px;
-            margin-bottom: 15px;
-        }
-        
-        .loading-circle {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 6px solid transparent;
-            border-top-color: #1a73e8;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        .loading-text {
-            margin-top: 10px;
-            font-size: 16px;
-        }
-        
-        .win-notification {
-            position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(30, 30, 30, 0.8);
-            color: #4caf50;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #4caf50;
-            text-align: center;
-            z-index: 1001;
-            width: 80%;
-            max-width: 300px;
-        }
-        
-        .win-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #4caf50;
-        }
-        
-        .win-details {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-        
-        .balance-change {
-            font-size: 14px;
-            color: #888;
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .balance-change span {
-            margin: 0 5px;
-        }
-        
-        .notification-close {
-            position: absolute;
-            top: 5px;
-            right: 10px;
-            font-size: 20px;
-            cursor: pointer;
-            color: white;
         }
         
         .no-balance {
@@ -431,55 +263,9 @@
             font-size: 18px;
             font-weight: bold;
         }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes explode {
-            0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 0; }
-        }
-        
-        @keyframes dust {
-            0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-        
-        @keyframes balanceUp {
-            0% { transform: scale(1); color: white; }
-            50% { transform: scale(1.2); color: #4caf50; }
-            100% { transform: scale(1); color: white; }
-        }
-        
-        @keyframes balanceDown {
-            0% { transform: scale(1); color: white; }
-            50% { transform: scale(1.2); color: #f44336; }
-            100% { transform: scale(1); color: white; }
-        }
-        
-        @keyframes fragmentFly {
-            to {
-                transform: translate(
-                    var(--tx, 0), 
-                    var(--ty, 0)
-                );
-                opacity: 0;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="loading" id="loading">
-        <div class="loading-spinner">
-            <div class="loading-circle"></div>
-        </div>
-        <div class="loading-text" id="loadingText">Загрузка...</div>
-    </div>
-
     <div class="no-balance" id="noBalance" style="display: none;">Недостаточный баланс для игры</div>
 
     <div class="header">
@@ -525,31 +311,11 @@
 
         <button class="action-button" id="actionButton">
             Играть
-            <span class="cooldown-timer" id="cooldownTimer"></span>
         </button>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
-        // Конфигурация Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyCMos6Y7C-krTLuKCI4VJG-TFLo6QI--k8",
-            authDomain: "vrot-x-7a48f.firebaseapp.com",
-            databaseURL: "https://vrot-x-7a48f-default-rtdb.firebaseio.com",
-            projectId: "vrot-x-7a48f",
-            storageBucket: "vrot-x-7a48f.firebasestorage.app",
-            messagingSenderId: "622297225288",
-            appId: "1:622297225288:web:5df6a5b02ffddedd96e07d"
-        };
-
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
         // Глобальные переменные
-        let userId = null;
-        let dbRef = null;
         let balance = 0;
         let currentBet = 0;
         let minesCount = 5;
@@ -558,14 +324,8 @@
         let bombPositions = [];
         let currentMultiplier = 1.0;
         let multiplierHistory = [];
-        let isFirebaseConnected = false;
-        let cooldownActive = false;
-        let cooldownInterval = null;
-        let currentNotification = null;
 
         // Элементы интерфейса
-        const loadingElement = document.getElementById('loading');
-        const loadingText = document.getElementById('loadingText');
         const noBalanceElement = document.getElementById('noBalance');
         const balanceElement = document.getElementById('balance');
         const gameBoard = document.getElementById('gameBoard');
@@ -577,129 +337,22 @@
         const maxBetButton = document.getElementById('maxBet');
         const minesButtons = document.querySelectorAll('.mines-buttons button');
         const actionButton = document.getElementById('actionButton');
-        const cooldownTimer = document.getElementById('cooldownTimer');
 
-        // Создать частицы пыли
-        function createDustParticles(element) {
-            const particles = document.createElement('div');
-            particles.className = 'particles';
-            
-            for (let i = 0; i < 10; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                const size = Math.random() * 4 + 2;
-                particle.style.width = `${size}px`;
-                particle.style.height = `${size}px`;
-                particle.style.left = `${Math.random() * 100}%`;
-                particle.style.top = `${Math.random() * 100}%`;
-                particle.style.animation = `dust ${Math.random() * 0.5 + 0.3}s ease-out forwards`;
-                
-                particles.appendChild(particle);
-            }
-            
-            element.appendChild(particles);
-            
-            setTimeout(() => {
-                particles.remove();
-            }, 500);
-        }
-
-        // Создать эффект взрыва с дымом и осколками
-        function createBombEffect(element) {
-            // Дым
-            const smoke = document.createElement('div');
-            smoke.className = 'smoke';
-            smoke.style.animation = 'dust 1.5s ease-out forwards';
-            element.appendChild(smoke);
-            
-            // Осколки
-            for (let i = 0; i < 15; i++) {
-                const fragment = document.createElement('div');
-                fragment.className = 'fragment';
-                
-                const size = Math.random() * 6 + 3;
-                fragment.style.width = `${size}px`;
-                fragment.style.height = `${size}px`;
-                fragment.style.left = '50%';
-                fragment.style.top = '50%';
-                fragment.style.backgroundColor = `rgba(255, ${Math.random() * 100 + 155}, ${Math.random() * 100}, 0.8)`;
-                
-                // Анимация разлёта
-                const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 100 + 50;
-                fragment.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-                fragment.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-                fragment.style.animation = `fragmentFly ${Math.random() * 0.5 + 0.5}s ease-out forwards`;
-                
-                element.appendChild(fragment);
-            }
-            
-            setTimeout(() => {
-                smoke.remove();
-                const fragments = element.querySelectorAll('.fragment');
-                fragments.forEach(f => f.remove());
-            }, 1500);
-        }
-
-        // Показать уведомление о победе
-        function showWinNotification(multiplier, winAmount, oldBalance, newBalance) {
-            // Удаляем предыдущее уведомление
-            if (currentNotification) {
-                currentNotification.remove();
-            }
-            
-            const notification = document.createElement('div');
-            notification.className = 'win-notification';
-            
-            notification.innerHTML = `
-                <div class="notification-close">×</div>
-                <div class="win-title">Поздравляем!</div>
-                <div class="win-details">x${multiplier.toFixed(2)} / +${winAmount.toFixed(2)} ₽</div>
-                <div class="balance-change">
-                    ${oldBalance} ₽ <span>→</span> ${newBalance} ₽
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            currentNotification = notification;
-            
-            // Закрытие по клику на крестик
-            notification.querySelector('.notification-close').addEventListener('click', () => {
-                notification.remove();
-                currentNotification = null;
-            });
-            
-            // Автозакрытие через 10 секунд
-            setTimeout(() => {
-                notification.remove();
-                currentNotification = null;
-            }, 10000);
-        }
-
-        // Активировать кулдаун кнопки
-        function activateCooldown() {
-            if (cooldownActive) return;
-            
-            cooldownActive = true;
-            actionButton.disabled = true;
-            cooldownTimer.textContent = 'Откат 0.5';
-            
-            let timeLeft = 0.5;
-            clearInterval(cooldownInterval);
-            
-            cooldownInterval = setInterval(() => {
-                timeLeft -= 0.1;
-                if (timeLeft <= 0) {
-                    clearInterval(cooldownInterval);
-                    cooldownTimer.textContent = '';
-                    actionButton.disabled = false;
-                    cooldownActive = false;
-                    updateControls();
-                } else {
-                    cooldownTimer.textContent = `Откат ${timeLeft.toFixed(1)}`;
+        // Получить баланс из cookie
+        function getBalanceFromCookie() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'miner_balance') {
+                    return parseFloat(value) || 0;
                 }
-            }, 100);
+            }
+            return 0;
+        }
+
+        // Сохранить баланс в cookie
+        function setBalanceToCookie(value) {
+            document.cookie = `miner_balance=${value}; path=/; max-age=31536000`; // 1 год
         }
 
         // Обновить состояние элементов управления
@@ -720,91 +373,7 @@
                 button.disabled = !hasBalance || gameActive;
             });
             
-            actionButton.disabled = !hasBalance || cooldownActive || gameActive;
-        }
-
-        // Генерация/получение ID пользователя
-        function getUserId() {
-            // Пытаемся получить Telegram ID
-            try {
-                const tg = window.Telegram?.WebApp;
-                if (tg?.initDataUnsafe?.user?.id) {
-                    return 'tg_' + tg.initDataUnsafe.user.id;
-                }
-            } catch (e) {
-                console.log("Telegram WebApp not available");
-            }
-            
-            // Если Telegram не доступен, используем localStorage
-            let localUserId = localStorage.getItem('vrot-x_userId');
-            if (!localUserId) {
-                localUserId = 'local_' + Math.random().toString(36).substr(2, 12) + 
-                            '_' + Date.now().toString(36);
-                localStorage.setItem('vrot-x_userId', localUserId);
-            }
-            return localUserId;
-        }
-
-        // Инициализация пользователя и загрузка баланса
-        async function initUser() {
-            userId = getUserId();
-            dbRef = database.ref('users/' + userId);
-            
-            // Быстрая загрузка (1 секунда)
-            loadingText.textContent = "Загрузка...";
-            
-            try {
-                // Проверяем соединение с Firebase
-                const connectedRef = database.ref('.info/connected');
-                connectedRef.on('value', (snap) => {
-                    isFirebaseConnected = snap.val() === true;
-                });
-                
-                // Загружаем данные пользователя
-                const snapshot = await dbRef.once('value');
-                
-                if (snapshot.exists()) {
-                    balance = parseFloat(snapshot.val().balance) || 0;
-                } else {
-                    // Создаем нового пользователя
-                    balance = 0;
-                    await dbRef.set({
-                        balance: balance,
-                        created_at: new Date().toISOString(),
-                        last_active: new Date().toISOString()
-                    });
-                }
-                
-                updateUI();
-                
-                // Слушаем изменения баланса в реальном времени
-                dbRef.on('value', (snap) => {
-                    if (snap.exists()) {
-                        const newBalance = parseFloat(snap.val().balance) || 0;
-                        if (newBalance !== balance) {
-                            balance = newBalance;
-                            updateUI();
-                        }
-                    }
-                });
-                
-            } catch (error) {
-                console.error("Ошибка загрузки:", error);
-                handleLoadError();
-            } finally {
-                // Завершаем анимацию загрузки через 1 секунду
-                setTimeout(() => {
-                    loadingElement.style.display = 'none';
-                    updateControls();
-                }, 1000);
-            }
-        }
-
-        // Обработка ошибки загрузки
-        function handleLoadError() {
-            balance = 0;
-            updateUI();
-            loadingText.textContent = "Оффлайн режим (баланс не сохраняется)";
+            actionButton.disabled = !hasBalance || gameActive;
         }
 
         // Обновление интерфейса
@@ -892,11 +461,6 @@
             
             // Кнопка действия
             actionButton.addEventListener('click', () => {
-                if (currentNotification) {
-                    currentNotification.remove();
-                    currentNotification = null;
-                }
-                
                 if (gameActive) {
                     collectWinnings();
                 } else {
@@ -925,17 +489,9 @@
             }
             
             // Снимаем ставку с баланса
-            const oldBalance = balance;
             balance -= currentBet;
-            
-            // Анимация уменьшения баланса
-            balanceElement.classList.add('balance-down');
-            setTimeout(() => {
-                balanceElement.classList.remove('balance-down');
-                balanceElement.textContent = balance.toFixed(2) + ' ₽';
-            }, 500);
-            
-            updateBalanceInDB(balance);
+            setBalanceToCookie(balance);
+            updateUI();
             
             // Генерируем позиции бомб
             generateBombs();
@@ -980,12 +536,7 @@
                 // Нашли бомбу
                 const content = cell.querySelector('.content');
                 content.textContent = '💣';
-                
-                // Вибрация
-                if (navigator.vibrate) navigator.vibrate(200);
-                
-                // Эффекты взрыва
-                createBombEffect(cell);
+                cell.classList.add('bomb');
                 
                 // Добавляем проигрыш в историю множителей
                 markLastMultiplier('lose');
@@ -994,7 +545,6 @@
                 // Пустая клетка
                 const content = cell.querySelector('.content');
                 content.textContent = '💎';
-                createDustParticles(cell);
                 
                 revealedCells++;
                 
@@ -1078,35 +628,12 @@
         // Забрать выигрыш
         function collectWinnings() {
             const winAmount = parseFloat((currentBet * currentMultiplier).toFixed(2));
-            const oldBalance = balance;
             balance += winAmount;
+            setBalanceToCookie(balance);
+            updateUI();
             
-            // Анимация прибавления баланса
-            balanceElement.classList.add('balance-up');
-            setTimeout(() => {
-                balanceElement.classList.remove('balance-up');
-                balanceElement.textContent = balance.toFixed(2) + ' ₽';
-            }, 500);
-            
-            updateBalanceInDB(balance);
             markLastMultiplier('win');
-            
-            // Показываем уведомление о победе
-            showWinNotification(currentMultiplier, winAmount, oldBalance.toFixed(2), balance.toFixed(2));
-            
             endGame();
-        }
-
-        // Обновление баланса в БД
-        function updateBalanceInDB(newBalance) {
-            if (isFirebaseConnected && dbRef) {
-                dbRef.update({ 
-                    balance: newBalance,
-                    last_active: new Date().toISOString()
-                }).catch(error => {
-                    console.error("Ошибка сохранения баланса:", error);
-                });
-            }
         }
 
         // Завершение игры
@@ -1114,28 +641,27 @@
             gameActive = false;
             actionButton.textContent = 'Играть';
             
-            // Плавное появление всех мин
+            // Показываем все мины
             bombPositions.forEach(pos => {
                 const cell = gameBoard.children[pos];
                 if (!cell.classList.contains('revealed')) {
                     const content = cell.querySelector('.content');
                     content.textContent = '💣';
-                    setTimeout(() => {
-                        cell.classList.add('bomb');
-                    }, 100);
+                    cell.classList.add('bomb');
                 }
             });
             
-            // Активируем кулдаун
-            activateCooldown();
             updateControls();
         }
 
         // Инициализация игры
         function initGame() {
+            // Загружаем баланс из cookie
+            balance = getBalanceFromCookie();
+            updateUI();
+            
             initGameBoard();
             setupControls();
-            initUser();
         }
 
         // Запуск игры при загрузке страницы
