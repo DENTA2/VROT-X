@@ -185,6 +185,7 @@
             <div class="title-gradient-line"></div>
         </div>
         <div class="games-grid">
+            <!-- Доступные игры -->
             <div class="game-card" onclick="openGame('miner')">
                 <div class="game-icon">💣</div>
                 <div class="game-name">Минер</div>
@@ -201,7 +202,12 @@
                 <div class="game-icon">🃏</div>
                 <div class="game-name">Классик</div>
             </div>
+            <div class="game-card" onclick="goToPlinko()">
+                <div class="game-icon">🎯</div>
+                <div class="game-name">Плинко</div>
+            </div>
             
+            <!-- Заблокированные игры -->
             <div class="game-card locked-game" onclick="showLockedMessage()">
                 <div class="game-icon">🎲</div>
                 <div class="game-name">Кости</div>
@@ -209,10 +215,6 @@
             <div class="game-card locked-game" onclick="showLockedMessage()">
                 <div class="game-icon">🎡</div>
                 <div class="game-name">Рулетка</div>
-            </div>
-            <div class="game-card locked-game" onclick="showLockedMessage()">
-                <div class="game-icon">🎯</div>
-                <div class="game-name">Плинко</div>
             </div>
         </div>
     </div>
@@ -346,6 +348,11 @@
 
         function goToCrash() {
             window.location.href = "crash.html";
+        }
+
+        // Добавлена функция перехода на Plinko
+        function goToPlinko() {
+            window.location.href = "plinko.html";
         }
 
         function showLockedMessage() {
