@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plinko Game</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: white;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #1a1a1a;
+        }
+        
+        .back-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .balance {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .difficulty-selector, .cells-selector {
+            display: flex;
+            justify-content: space-between;
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .difficulty-btn, .cells-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+        }
+        
+        .difficulty-btn.active, .cells-btn.active {
+            background-color: #4CAF50;
+        }
+        
+        .bet-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .bet-amount {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .bet-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .plinko-board {
+            width: 300px;
+            height: 400px;
+            background-color: #1a1a1a;
+            position: relative;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .ball {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            z-index: 10;
+        }
+        
+        .peg {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #555;
+            border-radius: 50%;
+        }
+        
+        .cell {
+            position: absolute;
+            bottom: 0;
+            height: 30px;
+            border-top: 2px solid #4CAF50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-button" onclick="goBack()">Назад</button>
+        <div class="balance" id="balance">Загрузка...</div>
+    </div>
+    
+    <div class="game-container">
+        <div class="controls">
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="easy">Легкий</button>
+                <button class="difficulty-btn" data-difficulty="medium">Средний</button>
+                <button class="difficulty-btn" data-difficulty="hard">Сложный</button>
+            </div>
+            
+            <div class="cells-selector">
+                <button class="cells-btn active" data-cells="8">8 ячеек</button>
+                <button class="cells-btn" data-cells="12">12 ячеек</button>
+                <button class="cells-btn" data-cells="16">16 ячеек</button>
+            </div>
+            
+            <div class="bet-controls">
+                <button class="bet-btn" id="decrease-bet">-</button>
+                <div class="bet-amount" id="bet-amount">10</div>
+                <button class="bet-btn" id="increase-bet">+</button>
+                <button class="bet-btn" id="start-game">Играть</button>
+            </div>
+        </div>
+        
+        <div class="plinko-board" id="plinko-board"></div>
+    </div>
+
+    <script>
+        // Инициализация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMos6Y7C-krTLuKCI4VJG-TFLo6QI--k8",
+            authDomain: "vrot-x-7a48f.firebaseapp.com",
+            databaseURL: "https://vrot-x-7a48f-default-rtdb.firebaseio.com",
+            projectId: "vrot-x-7a48f",
+            storageBucket: "vrot-x-7a48f.firebasestorage.app",
+            messagingSenderId: "622297225288",
+            appId: "1:622297225288:web:5df6a5b02ffddedd96e07d"
+        };
+        
+        // Инициализируем Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // Получаем ID из куки
+        function getTelegramIdFromCookie() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'telegram_id') {
+                    return value;
+                }
+            }
+            return null;
+        }
+        
+        // Загружаем баланс из Firebase
+        function loadBalance() {
+            const telegramId = getTelegramIdFromCookie();
+            if (!telegramId) {
+                document.getElementById('balance').textContent = 'Не авторизован';
+                return;
+            }
+            
+            database.ref('users/' + telegramId + '/balance').on('value', (snapshot) => {
+                const balance = snapshot.val();
+                document.getElementById('balance').textContent = `Баланс: ${balance || 0} ₽`;
+            });
+        }
+        
+        // Обновляем баланс в Firebase
+        function updateBalance(amount) {
+            const telegramId = getTelegramIdFromCookie();
+            if (!telegramId) return;
+            
+            database.ref('users/' + telegramId).transaction((user) => {
+                if (user) {
+                    user.balance = (user.balance || 0) + amount;
+                } else {
+                    user = { balance: amount };
+                }
+                return user;
+            });
+        }
+        
+        // Переход на главную страницу
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+        
+        // Инициализация игры
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBalance();
+            
+            let currentDifficulty = 'easy';
+            let currentCells = 8;
+            let currentBet = 10;
+            
+            // Обработчики кнопок сложности
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentDifficulty = btn.dataset.difficulty;
+                });
+            });
+            
+            // Обработчики кнопок выбора ячеек
+            document.querySelectorAll('.cells-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.cells-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentCells = parseInt(btn.dataset.cells);
+                    initBoard();
+                });
+            });
+            
+            // Управление ставкой
+            document.getElementById('increase-bet').addEventListener('click', () => {
+                currentBet += 10;
+                updateBetDisplay();
+            });
+            
+            document.getElementById('decrease-bet').addEventListener('click', () => {
+                if (currentBet > 10) {
+                    currentBet -= 10;
+                    updateBetDisplay();
+                }
+            });
+            
+            // Кнопка начала игры
+            document.getElementById('start-game').addEventListener('click', () => {
+                startGame(currentBet, currentDifficulty, currentCells);
+            });
+            
+            function updateBetDisplay() {
+                document.getElementById('bet-amount').textContent = currentBet;
+            }
+            
+            // Инициализация игрового поля
+            function initBoard() {
+                const board = document.getElementById('plinko-board');
+                board.innerHTML = '';
+                
+                // Создаем ячейки внизу
+                const cellWidth = board.offsetWidth / currentCells;
+                for (let i = 0; i < currentCells; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.width = `${cellWidth}px`;
+                    cell.style.left = `${i * cellWidth}px`;
+                    
+                    // Множители в зависимости от сложности и позиции ячейки
+                    let multiplier = 1;
+                    if (currentDifficulty === 'easy') {
+                        multiplier = 0.5 + (Math.abs(i - (currentCells / 2 - 0.5)) / (currentCells / 2) * 3;
+                    } else if (currentDifficulty === 'medium') {
+                        multiplier = 0.2 + (Math.abs(i - (currentCells / 2 - 0.5)) / (currentCells / 2) * 5;
+                    } else {
+                        multiplier = 0.1 + (Math.abs(i - (currentCells / 2 - 0.5)) / (currentCells / 2) * 8;
+                    }
+                    
+                    cell.textContent = `${multiplier.toFixed(1)}x`;
+                    board.appendChild(cell);
+                }
+                
+                // Создаем пины (шарики-препятствия)
+                const rows = 12;
+                const cols = currentCells - 1;
+                const pinSpacingX = board.offsetWidth / cols;
+                const pinSpacingY = board.offsetHeight / rows;
+                
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols - row % 2; col++) {
+                        const pin = document.createElement('div');
+                        pin.className = 'peg';
+                        
+                        const offsetX = row % 2 ? pinSpacingX / 2 : 0;
+                        pin.style.left = `${col * pinSpacingX + offsetX}px`;
+                        pin.style.top = `${row * pinSpacingY}px`;
+                        
+                        board.appendChild(pin);
+                    }
+                }
+            }
+            
+            // Запуск игры
+            function startGame(bet, difficulty, cells) {
+                const telegramId = getTelegramIdFromCookie();
+                if (!telegramId) {
+                    alert('Необходимо авторизоваться!');
+                    return;
+                }
+                
+                // Проверяем баланс
+                database.ref('users/' + telegramId + '/balance').once('value').then(snapshot => {
+                    const balance = snapshot.val() || 0;
+                    if (balance < bet) {
+                        alert('Недостаточно средств!');
+                        return;
+                    }
+                    
+                    // Снимаем ставку
+                    updateBalance(-bet);
+                    
+                    // Запускаем анимацию падения шарика
+                    dropBall(bet, difficulty, cells);
+                });
+            }
+            
+            // Анимация падения шарика
+            function dropBall(bet, difficulty, cells) {
+                const board = document.getElementById('plinko-board');
+                const ball = document.createElement('div');
+                ball.className = 'ball';
+                ball.style.left = `${board.offsetWidth / 2 - 7.5}px`;
+                board.appendChild(ball);
+                
+                // Простая анимация падения (в реальной игре нужно добавить физику)
+                let posX = board.offsetWidth / 2 - 7.5;
+                let posY = 0;
+                const speedY = 2;
+                
+                const animation = setInterval(() => {
+                    posY += speedY;
+                    
+                    // Простое "отскакивание" от краев
+                    if (posX <= 0 || posX >= board.offsetWidth - 15) {
+                        posX = posX <= 0 ? 0 : board.offsetWidth - 15;
+                    }
+                    
+                    // Случайное движение влево-вправо
+                    posX += (Math.random() - 0.5) * 4;
+                    
+                    ball.style.left = `${posX}px`;
+                    ball.style.top = `${posY}px`;
+                    
+                    // Если шарик достиг дна
+                    if (posY >= board.offsetHeight - 45) {
+                        clearInterval(animation);
+                        
+                        // Определяем выигрыш
+                        const cellWidth = board.offsetWidth / cells;
+                        const cellIndex = Math.floor(posX / cellWidth);
+                        
+                        let multiplier = 1;
+                        if (difficulty === 'easy') {
+                            multiplier = 0.5 + (Math.abs(cellIndex - (cells / 2 - 0.5)) / (cells / 2)) * 3;
+                        } else if (difficulty === 'medium') {
+                            multiplier = 0.2 + (Math.abs(cellIndex - (cells / 2 - 0.5)) / (cells / 2)) * 5;
+                        } else {
+                            multiplier = 0.1 + (Math.abs(cellIndex - (cells / 2 - 0.5)) / (cells / 2)) * 8;
+                        }
+                        
+                        const winAmount = Math.round(bet * multiplier);
+                        updateBalance(winAmount);
+                        
+                        alert(`Вы выиграли ${winAmount} ₽ (${multiplier.toFixed(1)}x)`);
+                        
+                        // Удаляем шарик через секунду
+                        setTimeout(() => {
+                            ball.remove();
+                        }, 1000);
+                    }
+                }, 20);
+            }
+            
+            // Инициализируем поле при загрузке
+            initBoard();
+        });
+    </script>
+</body>
+</html>
