@@ -294,6 +294,9 @@
         // Проверка технического обслуживания
         async function checkMaintenance() {
             try {
+                loadingElement.style.display = 'flex';
+                maintenanceElement.style.display = 'none';
+                
                 const maintenanceRef = database.ref('maintenance');
                 const snapshot = await maintenanceRef.once('value');
                 const maintenanceMode = snapshot.val();
@@ -302,18 +305,14 @@
                 if ((maintenanceMode === true || maintenanceMode === 'true' || maintenanceMode === 'True') && !isAdmin) {
                     maintenanceElement.style.display = 'flex';
                     appContentElement.style.display = 'none';
-                    loadingElement.style.display = 'none';
                 } else {
-                    // Для админов или когда нет техработ - показываем контент
-                    maintenanceElement.style.display = 'none';
-                    appContentElement.style.display = 'block';
-                    loadingElement.style.display = 'none';
+                    initUser();
                 }
             } catch (error) {
                 console.error("Ошибка проверки технического обслуживания:", error);
                 // В случае ошибки продолжаем как обычно
-                maintenanceElement.style.display = 'none';
-                appContentElement.style.display = 'block';
+                initUser();
+            } finally {
                 loadingElement.style.display = 'none';
             }
         }
@@ -369,7 +368,6 @@
                 telegramAuthElement.style.display = 'flex';
                 loadingElement.style.display = 'none';
                 appContentElement.style.display = 'none';
-                maintenanceElement.style.display = 'none';
                 return;
             }
             
@@ -399,13 +397,17 @@
                     });
                 }
                 
+                loadingElement.style.display = 'none';
+                appContentElement.style.display = 'block';
+                
                 // После загрузки пользователя проверяем техническое обслуживание
-                await checkMaintenance();
+                checkMaintenance();
             } catch (error) {
                 console.error("Ошибка подключения:", error);
-                loadingElement.style.display = 'none';
-                maintenanceElement.style.display = 'none';
-                appContentElement.style.display = 'block';
+                loadingElement.textContent = "Ошибка подключения";
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                }, 2000);
             }
         }
 
@@ -447,7 +449,6 @@
             // Сначала инициализируем пользователя (включая проверку админа)
             initUser();
             
-            // Гарантированное скрытие загрузчика через 5 секунд
             setTimeout(() => {
                 if (loadingElement.style.display !== 'none') {
                     loadingElement.style.display = 'none';
