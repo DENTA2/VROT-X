@@ -133,10 +133,21 @@
             color: #4CAF50;
             font-weight: bold;
         }
+        
+        .balance-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <button class="back-button" onclick="window.location.href='index.html'">Назад</button>
+    <div class="balance-display" id="balanceDisplay">Баланс: 0₽</div>
     
     <div class="game-container">
         <div class="graph-container">
@@ -189,9 +200,12 @@
         const placeBetButton = document.getElementById('placeBetButton');
         const cashOutButton = document.getElementById('cashOutButton');
         const playersCountDisplay = document.getElementById('playersCount');
+        const balanceDisplay = document.getElementById('balanceDisplay');
 
         // Переменные игры
-        const currentUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+        let currentUserId = localStorage.getItem('vrot-x_userId') || 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+        localStorage.setItem('vrot-x_userId', currentUserId);
+        
         let gameState = 'waiting';
         let currentMultiplier = 1.0;
         let gameInterval;
@@ -202,6 +216,8 @@
         let gameStartTime = 0;
         let gameDuration = 0;
         let bettingEndTime = 0;
+        let userBalance = 0;
+        let currentBetId = null;
 
         // Слушатели событий
         minButton.addEventListener('click', () => {
@@ -209,7 +225,7 @@
         });
 
         maxButton.addEventListener('click', () => {
-            betAmountInput.value = 1000; // Временное значение, замените на баланс пользователя
+            betAmountInput.value = userBalance;
         });
 
         placeBetButton.addEventListener('click', placeBet);
@@ -219,13 +235,19 @@
         initGame();
 
         function initGame() {
+            // Загружаем баланс пользователя
+            database.ref('users/' + currentUserId + '/balance').on('value', (snapshot) => {
+                userBalance = snapshot.val() || 0;
+                balanceDisplay.textContent = `Баланс: ${userBalance}₽`;
+            });
+
             // Регистрируем игрока
-            database.ref(`players/${currentUserId}`).set({
+            database.ref('crash/players/' + currentUserId).set({
                 joinedAt: Date.now(),
                 active: true
             }).then(() => {
                 // Проверяем состояние игры
-                database.ref('gameState').on('value', (snapshot) => {
+                database.ref('crash/gameState').on('value', (snapshot) => {
                     const state = snapshot.val();
                     if (state) {
                         updateGameState(state);
@@ -233,7 +255,7 @@
                 });
 
                 // Отслеживаем количество игроков
-                database.ref('players').on('value', (snapshot) => {
+                database.ref('crash/players').on('value', (snapshot) => {
                     const players = snapshot.val() || {};
                     const activePlayers = Object.values(players).filter(p => p.active);
                     playersCount = activePlayers.length;
@@ -243,12 +265,19 @@
                     if (playersCount === 0) {
                         resetGame();
                     }
+                    // Если появился первый игрок, начинаем игру
+                    else if (playersCount === 1 && gameState === 'waiting') {
+                        startNewRound();
+                    }
                 });
             });
 
             // Удаляем игрока при закрытии страницы
             window.addEventListener('beforeunload', () => {
-                database.ref(`players/${currentUserId}`).remove();
+                database.ref('crash/players/' + currentUserId).remove();
+                if (currentBetId) {
+                    database.ref('crash/bets/' + currentBetId).remove();
+                }
             });
         }
 
@@ -333,7 +362,7 @@
             gameStartTime = Date.now();
             gameDuration = Math.random() * 5000 + 3000; // 3-8 секунд
             
-            database.ref('gameState').update({
+            database.ref('crash/gameState').update({
                 currentState: 'running',
                 crashPoint: crashPoint,
                 gameStartTime: gameStartTime,
@@ -361,7 +390,7 @@
                 timerDisplay.textContent = currentMultiplier.toFixed(2) + 'x';
                 
                 // Обновляем в базе данных
-                database.ref('gameState').update({
+                database.ref('crash/gameState').update({
                     currentMultiplier: parseFloat(currentMultiplier.toFixed(2))
                 });
                 
@@ -378,7 +407,7 @@
         function endGame() {
             clearInterval(gameInterval);
             
-            database.ref('gameState').update({
+            database.ref('crash/gameState').update({
                 currentState: 'crashed'
             });
 
@@ -396,7 +425,7 @@
             const bettingDuration = 15000; // 15 секунд на ставки
             bettingEndTime = Date.now() + bettingDuration;
             
-            database.ref('gameState').set({
+            database.ref('crash/gameState').set({
                 currentState: 'betting',
                 bettingEndTime: bettingEndTime,
                 currentMultiplier: 1.0,
@@ -409,7 +438,7 @@
         function resetGame() {
             clearInterval(gameInterval);
             
-            database.ref('gameState').set({
+            database.ref('crash/gameState').set({
                 currentState: 'waiting',
                 currentMultiplier: 1.0,
                 crashPoint: 0,
@@ -423,9 +452,10 @@
             multiplierDisplay.textContent = '1.00x';
             timerDisplay.textContent = '0';
             hasBet = false;
+            currentBetId = null;
         }
 
-        function placeBet() {
+        async function placeBet() {
             betAmount = parseInt(betAmountInput.value) || 1;
             
             if (betAmount < 1) {
@@ -433,35 +463,59 @@
                 return;
             }
             
-            // Здесь должна быть проверка баланса
-            // Временно просто отмечаем ставку
+            if (betAmount > userBalance) {
+                alert('Недостаточно средств');
+                return;
+            }
             
-            hasBet = true;
-            placeBetButton.disabled = true;
-            cashOutButton.disabled = false;
-            
-            // Добавляем ставку игрока
-            database.ref(`bets/${currentUserId}`).set({
-                amount: betAmount,
-                cashedOut: false,
-                multiplier: 0
-            });
+            try {
+                // Создаем ставку в базе данных
+                currentBetId = 'bet_' + Date.now();
+                await database.ref('crash/bets/' + currentUserId + '_' + currentBetId).set({
+                    amount: betAmount,
+                    cashedOut: false,
+                    multiplier: 0,
+                    timestamp: Date.now()
+                });
+                
+                // Вычитаем сумму ставки из баланса
+                await database.ref('users/' + currentUserId + '/balance').set(userBalance - betAmount);
+                
+                hasBet = true;
+                placeBetButton.disabled = true;
+                cashOutButton.disabled = false;
+                
+            } catch (error) {
+                console.error("Ошибка при размещении ставки:", error);
+                alert("Ошибка при размещении ставки");
+            }
         }
 
-        function cashOut() {
-            if (!hasBet) return;
+        async function cashOut() {
+            if (!hasBet || !currentBetId) return;
             
-            const winAmount = Math.floor(betAmount * currentMultiplier);
-            alert(`Вы успешно забрали ${winAmount}р!`);
-            
-            // Обновляем ставку игрока
-            database.ref(`bets/${currentUserId}`).update({
-                cashedOut: true,
-                multiplier: currentMultiplier
-            });
-            
-            hasBet = false;
-            cashOutButton.disabled = true;
+            try {
+                const winAmount = Math.floor(betAmount * currentMultiplier);
+                
+                // Обновляем ставку
+                await database.ref('crash/bets/' + currentUserId + '_' + currentBetId).update({
+                    cashedOut: true,
+                    multiplier: currentMultiplier
+                });
+                
+                // Начисляем выигрыш
+                await database.ref('users/' + currentUserId + '/balance').set(userBalance + winAmount);
+                
+                alert(`Вы успешно забрали ${winAmount}р!`);
+                
+                hasBet = false;
+                cashOutButton.disabled = true;
+                currentBetId = null;
+                
+            } catch (error) {
+                console.error("Ошибка при выводе средств:", error);
+                alert("Ошибка при выводе средств");
+            }
         }
     </script>
 </body>
