@@ -70,14 +70,15 @@
         
         .cell {
             aspect-ratio: 1;
-            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            background: linear-gradient(135deg, #1a73e8, #00bcd4);
             border-radius: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 18px;
+            font-size: 24px;
             cursor: pointer;
+            transition: all 0.2s;
         }
         
         .cell.revealed {
@@ -246,27 +247,57 @@
             cursor: not-allowed;
         }
         
-        .no-balance {
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .loading-circle {
             position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(30, 30, 30, 0.9);
-            color: #f44336;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #f44336;
-            text-align: center;
-            z-index: 1001;
-            width: 80%;
-            max-width: 300px;
-            font-size: 18px;
-            font-weight: bold;
+            width: 100%;
+            height: 100%;
+            border: 6px solid transparent;
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            margin-top: 10px;
+            font-size: 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="no-balance" id="noBalance" style="display: none;">Недостаточный баланс для игры</div>
+    <div class="loading" id="loading">
+        <div class="loading-spinner">
+            <div class="loading-circle"></div>
+        </div>
+        <div class="loading-text">Синхронизация с сервером...</div>
+    </div>
 
     <div class="header">
         <div class="back-button" onclick="goBack()">← Назад</div>
@@ -314,8 +345,27 @@
         </button>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script>
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMos6Y7C-krTLuKCI4VJG-TFLo6QI--k8",
+            authDomain: "vrot-x-7a48f.firebaseapp.com",
+            databaseURL: "https://vrot-x-7a48f-default-rtdb.firebaseio.com",
+            projectId: "vrot-x-7a48f",
+            storageBucket: "vrot-x-7a48f.firebasestorage.app",
+            messagingSenderId: "622297225288",
+            appId: "1:622297225288:web:5df6a5b02ffddedd96e07d"
+        };
+
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         // Глобальные переменные
+        let userId = null;
+        let dbRef = null;
         let balance = 0;
         let currentBet = 0;
         let minesCount = 5;
@@ -326,7 +376,7 @@
         let multiplierHistory = [];
 
         // Элементы интерфейса
-        const noBalanceElement = document.getElementById('noBalance');
+        const loadingElement = document.getElementById('loading');
         const balanceElement = document.getElementById('balance');
         const gameBoard = document.getElementById('gameBoard');
         const multipliersTrack = document.getElementById('multipliersTrack');
@@ -338,42 +388,83 @@
         const minesButtons = document.querySelectorAll('.mines-buttons button');
         const actionButton = document.getElementById('actionButton');
 
-        // Получить баланс из cookie
-        function getBalanceFromCookie() {
-            const cookies = document.cookie.split(';');
-            for (let cookie of cookies) {
-                const [name, value] = cookie.trim().split('=');
-                if (name === 'miner_balance') {
-                    return parseFloat(value) || 0;
-                }
+        // Генерация ID пользователя
+        function getUserId() {
+            let localUserId = localStorage.getItem('miner_userId');
+            if (!localUserId) {
+                localUserId = 'user_' + Math.random().toString(36).substr(2, 12) + 
+                            '_' + Date.now().toString(36);
+                localStorage.setItem('miner_userId', localUserId);
             }
-            return 0;
+            return localUserId;
         }
 
-        // Сохранить баланс в cookie
-        function setBalanceToCookie(value) {
-            document.cookie = `miner_balance=${value}; path=/; max-age=31536000`; // 1 год
+        // Инициализация пользователя и загрузка баланса
+        async function initUser() {
+            userId = getUserId();
+            dbRef = database.ref('users/' + userId);
+            
+            try {
+                // Проверяем соединение с Firebase
+                const connectedRef = database.ref('.info/connected');
+                connectedRef.on('value', (snap) => {
+                    if (snap.val() === true) {
+                        console.log("Connected to Firebase");
+                    }
+                });
+                
+                // Загружаем данные пользователя
+                const snapshot = await dbRef.once('value');
+                
+                if (snapshot.exists()) {
+                    balance = parseFloat(snapshot.val().balance) || 0;
+                } else {
+                    // Создаем нового пользователя
+                    balance = 0;
+                    await dbRef.set({
+                        balance: balance,
+                        created_at: new Date().toISOString(),
+                        last_active: new Date().toISOString()
+                    });
+                }
+                
+                updateUI();
+                
+                // Слушаем изменения баланса в реальном времени
+                dbRef.on('value', (snap) => {
+                    if (snap.exists()) {
+                        const newBalance = parseFloat(snap.val().balance) || 0;
+                        if (newBalance !== balance) {
+                            balance = newBalance;
+                            updateUI();
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error("Ошибка загрузки:", error);
+                // В случае ошибки используем локальный баланс
+                balance = 0;
+                updateUI();
+            } finally {
+                // Скрываем загрузочный экран через 2 секунды
+                setTimeout(() => {
+                    loadingElement.style.display = 'none';
+                    updateControls();
+                }, 2000);
+            }
         }
 
-        // Обновить состояние элементов управления
-        function updateControls() {
-            const hasBalance = balance >= 1;
-            const shouldShowNoBalance = !hasBalance && !gameActive;
-            
-            noBalanceElement.style.display = shouldShowNoBalance ? 'block' : 'none';
-            
-            // Блокируем или разблокируем элементы управления
-            betAmountInput.disabled = !hasBalance || gameActive;
-            minBetButton.disabled = !hasBalance || gameActive;
-            halfBetButton.disabled = !hasBalance || gameActive;
-            doubleBetButton.disabled = !hasBalance || gameActive;
-            maxBetButton.disabled = !hasBalance || gameActive;
-            
-            minesButtons.forEach(button => {
-                button.disabled = !hasBalance || gameActive;
-            });
-            
-            actionButton.disabled = !hasBalance || gameActive;
+        // Обновление баланса в БД
+        function updateBalanceInDB(newBalance) {
+            if (dbRef) {
+                dbRef.update({ 
+                    balance: newBalance,
+                    last_active: new Date().toISOString()
+                }).catch(error => {
+                    console.error("Ошибка сохранения баланса:", error);
+                });
+            }
         }
 
         // Обновление интерфейса
@@ -396,11 +487,6 @@
             for (let i = 0; i < 25; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'cell';
-                
-                const content = document.createElement('div');
-                content.className = 'content';
-                content.textContent = '?';
-                cell.appendChild(content);
                 
                 cell.addEventListener('click', () => handleCellClick(i));
                 gameBoard.appendChild(cell);
@@ -476,21 +562,13 @@
         function startGame() {
             currentBet = parseInt(betAmountInput.value);
             
-            if (isNaN(currentBet) || currentBet <= 0) {
-                return;
-            }
-            
-            if (currentBet < 1) {
-                return;
-            }
-            
-            if (currentBet > balance) {
+            if (isNaN(currentBet) || currentBet <= 0 || currentBet > balance) {
                 return;
             }
             
             // Снимаем ставку с баланса
             balance -= currentBet;
-            setBalanceToCookie(balance);
+            updateBalanceInDB(balance);
             updateUI();
             
             // Генерируем позиции бомб
@@ -503,8 +581,7 @@
             
             // Обновляем интерфейс
             gameActive = true;
-            actionButton.textContent = 'Сделайте ход';
-            actionButton.disabled = true;
+            actionButton.textContent = 'Собрать ' + currentMultiplier.toFixed(2) + 'x';
             
             // Очищаем поле
             initGameBoard();
@@ -534,8 +611,7 @@
             
             if (bombPositions.includes(index)) {
                 // Нашли бомбу
-                const content = cell.querySelector('.content');
-                content.textContent = '💣';
+                cell.textContent = '💣';
                 cell.classList.add('bomb');
                 
                 // Добавляем проигрыш в историю множителей
@@ -543,9 +619,7 @@
                 endGame();
             } else {
                 // Пустая клетка
-                const content = cell.querySelector('.content');
-                content.textContent = '💎';
-                
+                cell.textContent = '💎';
                 revealedCells++;
                 
                 // Проверяем, не открыты ли все безопасные клетки
@@ -557,8 +631,7 @@
                 }
                 
                 updateMultiplier();
-                actionButton.disabled = false;
-                actionButton.textContent = `Забрать ${(currentBet * currentMultiplier).toFixed(2)} ₽`;
+                actionButton.textContent = 'Собрать ' + currentMultiplier.toFixed(2) + 'x';
             }
         }
 
@@ -629,7 +702,7 @@
         function collectWinnings() {
             const winAmount = parseFloat((currentBet * currentMultiplier).toFixed(2));
             balance += winAmount;
-            setBalanceToCookie(balance);
+            updateBalanceInDB(balance);
             updateUI();
             
             markLastMultiplier('win');
@@ -645,8 +718,7 @@
             bombPositions.forEach(pos => {
                 const cell = gameBoard.children[pos];
                 if (!cell.classList.contains('revealed')) {
-                    const content = cell.querySelector('.content');
-                    content.textContent = '💣';
+                    cell.textContent = '💣';
                     cell.classList.add('bomb');
                 }
             });
@@ -656,12 +728,9 @@
 
         // Инициализация игры
         function initGame() {
-            // Загружаем баланс из cookie
-            balance = getBalanceFromCookie();
-            updateUI();
-            
             initGameBoard();
             setupControls();
+            initUser();
         }
 
         // Запуск игры при загрузке страницы
