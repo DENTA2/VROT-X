@@ -48,7 +48,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .account-button:active {
-            background: linear-gradient(rgba(66, 133, 244, 0.1), rgba(66, 133, 244, 0.1)), white;
+            background: linear-gradient(rgba(66, 133, 244, 0.1), white;
             transform: translateY(0);
         }
         .games-container {
@@ -240,6 +240,14 @@
         let telegramAuthElement = document.getElementById('telegramAuth');
         let tg = null;
 
+        // Получение текущего времени в часовом поясе МСК +2
+        function getCurrentMoscowTime() {
+            const now = new Date();
+            // МСК +2 (UTC+5)
+            const offset = 5 * 60 * 60 * 1000;
+            return new Date(now.getTime() + offset);
+        }
+
         // Получение Telegram ID из cookie
         function getTelegramIdFromCookie() {
             const cookies = document.cookie.split(';');
@@ -272,7 +280,7 @@
                 setTelegramIdCookie(userId);
                 
                 // Инициализируем пользователя
-                initUser();
+                initUser(tgUser);
                 
                 // Скрываем окно авторизации
                 telegramAuthElement.style.display = 'none';
@@ -282,34 +290,75 @@
         }
 
         // Инициализация пользователя
-        async function initUser() {
+        async function initUser(tgUser = null) {
             // Проверяем Telegram ID из cookie
             const tgUserId = getTelegramIdFromCookie();
             
-            if (!tgUserId) {
+            if (!tgUserId && !tgUser) {
                 // Показываем окно авторизации
                 telegramAuthElement.style.display = 'flex';
                 loadingElement.style.display = 'none';
                 return;
             }
             
-            userId = tgUserId;
+            userId = tgUserId || (tgUser ? tgUser.id.toString() : null);
+            if (!userId) {
+                loadingElement.style.display = 'none';
+                return;
+            }
+            
             dbRef = database.ref('users/' + userId);
             
             try {
                 const snapshot = await dbRef.once('value');
+                const currentTime = getCurrentMoscowTime().toISOString();
                 
                 if (!snapshot.exists()) {
-                    await dbRef.set({
+                    // Создаем новую запись с данными пользователя Telegram
+                    const userData = {
                         balance: 0,
-                        created_at: new Date().toISOString(),
-                        last_active: new Date().toISOString(),
+                        created_at: currentTime,
+                        last_active: currentTime,
                         is_telegram_user: true
-                    });
+                    };
+                    
+                    // Добавляем имя и юзернейм из Telegram, если они есть
+                    if (tgUser) {
+                        if (tgUser.first_name) {
+                            userData.first_name = tgUser.first_name;
+                        }
+                        if (tgUser.last_name) {
+                            userData.last_name = tgUser.last_name;
+                        }
+                        if (tgUser.username) {
+                            userData.username = tgUser.username;
+                        }
+                    }
+                    
+                    await dbRef.set(userData);
                 } else {
+                    // Обновляем только время последней активности
                     await dbRef.update({
-                        last_active: new Date().toISOString()
+                        last_active: currentTime
                     });
+                    
+                    // Если есть данные Telegram, обновляем имя и юзернейм
+                    if (tgUser) {
+                        const updates = {};
+                        if (tgUser.first_name) {
+                            updates.first_name = tgUser.first_name;
+                        }
+                        if (tgUser.last_name) {
+                            updates.last_name = tgUser.last_name;
+                        }
+                        if (tgUser.username) {
+                            updates.username = tgUser.username;
+                        }
+                        
+                        if (Object.keys(updates).length > 0) {
+                            await dbRef.update(updates);
+                        }
+                    }
                 }
                 
                 loadingElement.style.display = 'none';
