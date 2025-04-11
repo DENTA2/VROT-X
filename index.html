@@ -165,6 +165,10 @@
                 <div class="game-icon">🎰</div>
                 <div class="game-name">Слоты</div>
             </div>
+            <div class="game-card" onclick="goToCrash()">
+                <div class="game-icon">📉</div>
+                <div class="game-name">Краш</div>
+            </div>
             <div class="game-card" onclick="goToClassic()">
                 <div class="game-icon">🃏</div>
                 <div class="game-name">Классик</div>
@@ -178,10 +182,6 @@
             <div class="game-card locked-game" onclick="showLockedMessage()">
                 <div class="game-icon">🎡</div>
                 <div class="game-name">Рулетка</div>
-            </div>
-            <div class="game-card locked-game" onclick="showLockedMessage()">
-                <div class="game-icon">📉</div>
-                <div class="game-name">Краш</div>
             </div>
             <div class="game-card locked-game" onclick="showLockedMessage()">
                 <div class="game-icon">🎯</div>
@@ -269,7 +269,7 @@
         function openGame(game) {
             switch(game) {
                 case 'miner':
-                    window.location.href = "crash.html";
+                    window.location.href = "miner.html";
                     break;
                 default:
                     console.error('Unknown game:', game);
@@ -289,6 +289,11 @@
         // Переход на классические игры
         function goToClassic() {
             window.location.href = "classik.html";
+        }
+
+        // Переход на игру Краш
+        function goToCrash() {
+            window.location.href = "crash.html";
         }
 
         // Сообщение о заблокированной игре
